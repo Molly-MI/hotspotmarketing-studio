@@ -1,0 +1,15 @@
+# 密钥,绝不入库
+.env
+
+# 运行时生成的数据 —— 均有内置默认值兜底,克隆后自动生成
+prompts.json
+products.json
+datasets.json
+sources.json
+events.jsonl
+evals/
+*.bak
+
+# 系统与依赖
+.DS_Store
+node_modules/

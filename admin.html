@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后台管理 · 提示词工程 · 热点营销工作台</title>
+<style>
+  :root {
+    --brand: #5b5bf6; --brand-dark: #4747d1; --brand-light: #eeeefe; --brand-lighter: #f6f6ff;
+    --ink: #1a1d29; --ink-2: #4b5063; --ink-3: #8a90a6;
+    --bg: #f7f8fb; --card: #fff; --line: #e6e8f0;
+    --green: #16a34a; --green-bg: #f2fbf5; --orange: #ea580c; --orange-bg: #fdf6f0;
+    --red: #dc2626; --red-bg: #fdf4f4;
+    --radius: 10px; --radius-sm: 8px;
+    --shadow: 0 1px 2px rgba(26,29,41,.05);
+    --shadow-lg: 0 2px 8px rgba(26,29,41,.07);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.6;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  button, input, textarea, select { font-family: inherit; }
+  button { cursor: pointer; border: none; background: none; }
+  a { color: var(--brand); }
+
+  /* header */
+  .header {
+    height: 56px; background: #fff; border-bottom: 1px solid var(--line); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 30px; height: 30px; border-radius: var(--radius-sm); display: grid; place-items: center;
+    background: var(--ink); color: #fff; font-weight: 600; font-size: 14px; letter-spacing: .5px;
+  }
+  .logo-name { font-size: 15px; font-weight: 600; }
+  .logo-sub { font-size: 11px; color: var(--ink-3); margin-left: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .src-badge {
+    font-size: 11.5px; font-weight: 500; padding: 4px 11px; border-radius: 999px;
+    background: var(--bg); color: var(--ink-3); border: 1px solid var(--line);
+  }
+  .src-badge.server { background: var(--green-bg); color: #15803d; border-color: #d3ecdc; }
+  .src-badge.local { background: var(--orange-bg); color: #b45309; border-color: #f0ddc9; }
+
+  .layout { flex: 1; display: flex; min-height: 0; }
+  .sidebar { width: 210px; flex-shrink: 0; background: #fff; border-right: 1px solid var(--line); padding: 22px 12px; }
+  .sidebar-title { font-size: 11px; font-weight: 600; color: var(--ink-3); letter-spacing: 1.2px; padding: 0 12px 10px; }
+  .nav-item {
+    position: relative; display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+    padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 400; color: var(--ink-2);
+    margin-bottom: 2px; transition: background .15s, color .15s; text-decoration: none;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--ink); }
+  .nav-item.on { background: var(--bg); color: var(--ink); font-weight: 600; }
+  .nav-item.on::before {
+    content: ''; position: absolute; left: 0; top: 7px; bottom: 7px;
+    width: 3px; border-radius: 2px; background: var(--brand);
+  }
+
+  .main { flex: 1; overflow-y: auto; padding: 28px 30px 100px; min-width: 0; }
+  .wrap { max-width: 940px; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-desc { font-size: 13px; color: var(--ink-3); margin: 3px 0 24px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 20px; }
+  .card-head { padding: 16px 20px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .card-title { font-size: 14.5px; font-weight: 600; }
+  .card-sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .card-body { padding: 20px; }
+
+  label.fl { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
+  textarea, input[type=text], input[type=password], select {
+    width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 9px 12px;
+    font-size: 13px; color: var(--ink); background: #fff; outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  textarea { font-family: var(--mono); font-size: 12.5px; line-height: 1.75; resize: vertical; min-height: 90px; }
+  textarea:focus, input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light); }
+  .hint { font-size: 11.5px; color: var(--ink-3); margin-top: 6px; line-height: 1.7; }
+  .hint b { font-weight: 600; color: var(--ink-2); }
+  code { font-family: var(--mono); background: var(--bg); padding: 1px 5px; border-radius: 5px; font-size: 11.5px; }
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; min-width: 0; }
+  .mb { margin-bottom: 20px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+    border: 1px solid transparent; transition: all .15s; text-decoration: none;
+  }
+  .btn-primary { background: var(--brand); color: #fff; }
+  .btn-primary:hover { background: var(--brand-dark); }
+  .btn-primary:disabled { background: #c3c4e8; cursor: not-allowed; }
+  .btn-ghost { background: #fff; color: var(--ink-2); border-color: var(--line); }
+  .btn-ghost:hover { border-color: #c8cbdc; color: var(--ink); }
+  .btn-danger { background: #fff; color: var(--red); border-color: #f3cfcf; }
+  .btn-danger:hover { background: var(--red-bg); }
+  .btn-sm { padding: 5px 11px; font-size: 12.5px; border-radius: 7px; }
+
+  /* 变量表 */
+  table.vars { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  table.vars td { padding: 5px 8px; font-size: 12px; border-bottom: 1px dashed var(--line); vertical-align: top; }
+  table.vars td:first-child { width: 168px; }
+  table.vars code { cursor: pointer; }
+  table.vars code:hover { background: var(--brand-light); color: var(--brand-dark); }
+  table.vars td:last-child { color: var(--ink-3); }
+
+  /* 版本风格 */
+  .style-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; background: #fff; }
+  .style-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .style-key {
+    width: 26px; height: 26px; flex-shrink: 0; border-radius: 7px; display: grid; place-items: center;
+    background: var(--bg); color: var(--ink-2); font-weight: 600; font-size: 12px;
+  }
+  .style-top input { flex: 1; }
+  .icon-btn {
+    width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--line); background: #fff;
+    color: var(--ink-3); font-size: 13px; flex-shrink: 0;
+  }
+  .icon-btn:hover { border-color: #c8cbdc; color: var(--ink); }
+  .icon-btn.del:hover { border-color: #f3cfcf; color: var(--red); background: var(--red-bg); }
+
+  /* 语调 chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px; padding: 5px 8px 5px 13px;
+    border-radius: 999px; background: #fff; border: 1px solid var(--line);
+    font-size: 12.5px; font-weight: 500; color: var(--ink-2);
+  }
+  .chip button { color: var(--ink-3); font-size: 13px; line-height: 1; }
+  .chip button:hover { color: var(--red); }
+
+  /* 预览 */
+  .msg-box { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
+  .msg-role {
+    padding: 7px 12px; font-size: 11.5px; font-weight: 600; letter-spacing: .5px;
+    background: var(--bg); color: var(--ink-3); display: flex; justify-content: space-between;
+  }
+  .msg-text {
+    padding: 12px; font-family: var(--mono); font-size: 12px; line-height: 1.8;
+    white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow-y: auto;
+  }
+  .msg-text .v { background: #fdf3d4; border-radius: 3px; padding: 0 2px; }
+  .run-out {
+    border: 1px solid var(--line); background: var(--bg); border-radius: var(--radius);
+    padding: 14px 16px; font-size: 14px; line-height: 1.85; white-space: pre-wrap; min-height: 60px;
+  }
+  .stream-cursor { display: inline-block; width: 7px; height: 15px; background: var(--brand); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .test-out { font-size: 12px; line-height: 1.7; border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 12px; white-space: pre-wrap; word-break: break-all; }
+  .test-out.ok { background: var(--green-bg); border: 1px solid #d3ecdc; color: #15803d; }
+  .test-out.bad { background: var(--red-bg); border: 1px solid #f3cfcf; color: #b91c1c; }
+
+  /* 底部保存栏 */
+  .savebar {
+    position: fixed; left: 210px; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255,255,255,.94); backdrop-filter: blur(8px);
+    border-top: 1px solid var(--line); padding: 12px 30px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .savebar .status { font-size: 12.5px; color: var(--ink-3); margin-right: auto; }
+  .savebar .status b { color: var(--orange); font-weight: 600; }
+  .toast {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-16px);
+    background: var(--ink); color: #fff; font-size: 13px; font-weight: 400;
+    padding: 10px 20px; border-radius: var(--radius-sm); box-shadow: 0 6px 20px rgba(26,29,41,.16);
+    opacity: 0; pointer-events: none; transition: all .25s; z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { background: #15803d; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d4d7e3; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">H</div>
+    <div>
+      <span class="logo-name">后台管理</span>
+      <span class="logo-sub">Prompt 工程 · 模型配置</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="src-badge" id="srcBadge">加载中…</span>
+    <a class="btn btn-ghost btn-sm" href="index.html">← 返回工作台</a>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">配置项</div>
+    <a class="nav-item on" href="#sec-prompt">提示词模板</a>
+    <a class="nav-item" href="#sec-style">版本风格</a>
+    <a class="nav-item" href="#sec-tone">语调预设</a>
+    <a class="nav-item" href="#sec-model">模型参数</a>
+    <a class="nav-item" href="#sec-preview">预览与试运行</a>
+    <a class="nav-item" href="#sec-source">抓取源配置</a>
+    <div class="sidebar-title" style="margin-top:20px">其它后台</div>
+    <a class="nav-item" href="products.html">商品库管理</a>
+    <a class="nav-item" href="eval.html">效果评测 Eval</a>
+    <div style="border-top:1px solid var(--line);margin:18px 12px;padding-top:14px;font-size:11.5px;color:var(--ink-3);line-height:1.75">
+      修改后点击右下角<b style="color:var(--ink-2)">保存</b>,工作台 Step 4 立即生效。<br>
+      快捷键 <code>⌘/Ctrl + S</code>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="wrap">
+      <div class="page-title">提示词与模型配置</div>
+      <div class="page-desc">这里维护 Step 4「创作文案」调用大模型时使用的全部提示词与参数,支持随时预览渲染结果并试运行。</div>
+
+      <!-- ============ 提示词模板 ============ -->
+      <section class="card" id="sec-prompt">
+        <div class="card-head">
+          <div>
+            <div class="card-title">提示词模板</div>
+            <div class="card-sub">system 定义角色与硬性规范,user 注入热点与商品素材</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="resetField('system','userTemplate','productLine','repairTemplate')">恢复本节默认</button>
+        </div>
+        <div class="card-body">
+          <div class="mb">
+            <label class="fl">系统提示词 System Prompt</label>
+            <textarea id="fSystem" rows="14" oninput="markDirty()"></textarea>
+            <div class="hint">建议在此固化:角色设定、字数与段落要求、emoji 与话题标签规则、广告法合规红线、语气风格。</div>
+          </div>
+          <div class="mb">
+            <label class="fl">用户提示词模板 User Prompt Template</label>
+            <textarea id="fUser" rows="14" oninput="markDirty()"></textarea>
+            <div class="hint">支持 <code>{{变量}}</code> 占位符,运行时替换为真实素材。点击下表中的变量名即可插入到光标处。</div>
+            <table class="vars" id="varTable"></table>
+          </div>
+          <div class="mb">
+            <label class="fl">商品行模板 Product Line Template</label>
+            <textarea id="fProdLine" rows="2" oninput="markDirty()"></textarea>
+            <div class="hint"><code>{{products}}</code> 会把每件选定商品按此模板渲染后换行拼接。可用变量:<span id="prodVars"></span></div>
+          </div>
+          <div>
+            <label class="fl">合规修正提示词 Repair Prompt</label>
+            <textarea id="fRepair" rows="12" oninput="markDirty()"></textarea>
+            <div class="hint">
+              文案没通过发布前的规则校验时,系统会带着失败原因让模型自己改一版(手工模式的「一键修正」与自动流水线共用这段)。
+              可用变量:<code>{{copy}}</code> 原文案 · <code>{{failures}}</code> 未通过的检查项 · <code>{{products}}</code> 商品素材 · <code>{{topics}}</code> 话题标签。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 版本风格 ============ -->
+      <section class="card" id="sec-style">
+        <div class="card-head">
+          <div>
+            <div class="card-title">版本风格</div>
+            <div class="card-sub">每个风格并发发起一次生成,对应工作区里的一个候选版本页签</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="addStyle()">+ 新增风格</button>
+        </div>
+        <div class="card-body">
+          <div id="styleList"></div>
+          <div class="hint">风格数量即生成的版本数量。数量越多,单次生成的 token 消耗与耗时越高(并发请求)。</div>
+        </div>
+      </section>
+
+      <!-- ============ 语调预设 ============ -->
+      <section class="card" id="sec-tone">
+        <div class="card-head">
+          <div>
+            <div class="card-title">语调预设</div>
+            <div class="card-sub">工作台 Step 4 左侧「主打语调」可选项,注入 <code>{{tone}}</code></div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chips" id="toneChips"></div>
+          <div class="row" style="max-width:420px">
+            <input type="text" id="newTone" placeholder="输入新语调,如:种草测评 / 官方稳重" onkeydown="if(event.key==='Enter')addTone()">
+            <button class="btn btn-ghost" style="flex:0 0 auto" onclick="addTone()">+ 添加</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 模型参数 ============ -->
+      <section class="card" id="sec-model">
+        <div class="card-head">
+          <div>
+            <div class="card-title">模型参数</div>
+            <div class="card-sub">默认 DeepSeek,兼容任意 OpenAI 协议接口(Kimi / 通义 / vLLM / Ollama)</div>
+          </div>
+          <span class="src-badge" id="modeBadge2"></span>
+        </div>
+        <div class="card-body">
+          <div class="mb">
+            <label class="fl">接入方式</label>
+            <div class="row" id="segMode" style="max-width:520px">
+              <button class="btn btn-ghost" data-m="mock" onclick="pickMode('mock')">本地 Mock</button>
+              <button class="btn btn-ghost" data-m="proxy" onclick="pickMode('proxy')">服务端代理(推荐)</button>
+              <button class="btn btn-ghost" data-m="direct" onclick="pickMode('direct')">浏览器直连</button>
+            </div>
+            <div class="hint" id="modeTip"></div>
+          </div>
+          <div id="apiFields">
+            <div class="row mb">
+              <div>
+                <label class="fl">服务商</label>
+                <select id="fProvider" onchange="pickProvider(this.value)"></select>
+              </div>
+              <div>
+                <label class="fl">模型</label>
+                <input type="text" id="fModel" list="modelList" oninput="markDirty()">
+                <datalist id="modelList"></datalist>
+              </div>
+            </div>
+            <div class="mb">
+              <label class="fl">Base URL</label>
+              <input type="text" id="fBase" oninput="markDirty()">
+              <div class="hint">统一按 OpenAI 协议请求 <code>{Base URL}/chat/completions</code>。DeepSeek 为 <code>https://api.deepseek.com/v1</code>。</div>
+            </div>
+            <div class="mb">
+              <label class="fl">API Key <span id="keyOpt" style="font-weight:400;color:var(--ink-3)"></span></label>
+              <input type="password" id="fKey" autocomplete="off" placeholder="sk-··················" oninput="markDirty()">
+              <div class="hint"><b>注意:</b>此处填写的密钥仅保存在你本机浏览器的 localStorage(Demo 用途)。生产环境请用「服务端代理」模式,把密钥写在服务端 <code>.env</code> 的 <code>DEEPSEEK_API_KEY</code> 中,前端留空即可。</div>
+            </div>
+            <div class="row mb">
+              <div>
+                <label class="fl">创意温度 temperature · <b id="tVal">1.5</b></label>
+                <input type="range" id="fTemp" min="0" max="2" step="0.1" style="width:100%" oninput="document.getElementById('tVal').textContent=this.value;markDirty()">
+                <div class="hint">DeepSeek 官方建议:创意写作 1.5 / 通用对话 1.3 / 数据抽取 1.0。</div>
+              </div>
+              <div>
+                <label class="fl">流式输出</label>
+                <label style="font-size:13px;color:var(--ink-2)"><input type="checkbox" id="fStream" onchange="markDirty()" style="accent-color:var(--brand)"> 打字机效果(SSE 流式返回)</label>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="testBtn" onclick="testConn()">测试连接</button>
+            <div id="testOut"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 预览与试运行 ============ -->
+      <section class="card" id="sec-preview">
+        <div class="card-head">
+          <div>
+            <div class="card-title">预览与试运行</div>
+            <div class="card-sub">用示例素材渲染当前(含未保存)模板,黄色高亮为已替换的变量值</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row mb" style="max-width:620px">
+            <div>
+              <label class="fl">预览语调</label>
+              <select id="pvTone" onchange="renderPreview()"></select>
+            </div>
+            <div>
+              <label class="fl">预览风格</label>
+              <select id="pvStyle" onchange="renderPreview()"></select>
+            </div>
+          </div>
+          <div id="preview"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin:14px 0 12px">
+            <button class="btn btn-primary btn-sm" id="runBtn" onclick="tryRun()">试运行(调用大模型)</button>
+            <span class="hint" id="runMeta" style="margin:0"></span>
+          </div>
+          <div class="run-out" id="runOut">点击「试运行」用当前提示词真实调用一次大模型,结果仅用于调试,不会写入工作台。</div>
+        </div>
+      </section>
+
+      <!-- ============ 抓取源配置 ============ -->
+      <section class="card" id="sec-source">
+        <div class="card-head">
+          <div>
+            <div class="card-title">抓取源配置</div>
+            <div class="card-sub">工作台 Step 1「立即抓取」使用的真实数据源,由本地服务端代抓(不受浏览器跨域限制)</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="srcTestBtn" onclick="testSources()">测试全部源</button>
+        </div>
+        <div class="card-body">
+          <div id="sourceList"></div>
+          <div class="row mb" style="max-width:640px;margin-top:12px">
+            <input type="text" id="newSrcName" autocomplete="off" placeholder="源名称,如 新浪科技">
+            <input type="text" id="newSrcUrl" autocomplete="off" placeholder="RSS / Atom 地址 https://…" style="flex:2">
+            <button class="btn btn-ghost" style="flex:0 0 auto" onclick="addSource()">+ 添加 RSS 源</button>
+          </div>
+          <div id="srcTestOut"></div>
+          <div class="hint" style="margin-top:12px">
+            热榜类源(微博/百度/头条)使用站点公开接口,<b>仅供原型演示</b>;生产环境请改用官方开放平台或商业舆情 API,并遵守目标站点的 robots.txt 与服务条款。抓取结果服务端缓存 60 秒。<br>
+            抓到的新闻会自动做<b>借势风险识别</b>:灾难、疫情、战争、犯罪类热点标记为「禁止借势」并在工作台阻止选用,时政与社会争议类标记为「需人工判断」。
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="savebar">
+  <span class="status" id="saveStatus"></span>
+  <button class="btn btn-ghost btn-sm" onclick="exportJson()">导出 JSON</button>
+  <button class="btn btn-ghost btn-sm" onclick="document.getElementById('impFile').click()">导入</button>
+  <input type="file" id="impFile" accept="application/json" style="display:none" onchange="importJson(this)">
+  <button class="btn btn-danger btn-sm" onclick="resetAll()">重置为默认</button>
+  <button class="btn btn-primary" id="saveBtn" onclick="saveAll()">保存</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="prompts.js"></script>
+<script src="llm.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+let dirty = false;
+let draft = null;              // 页面上正在编辑的提示词草稿
+let modeDraft = 'mock';
+
+function toast(msg, ok) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (ok ? ' success' : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function markDirty() { dirty = true; paintStatus(); renderPreview(); }
+function paintStatus() {
+  const src = { server: '服务端 prompts.json', local: '浏览器 localStorage', default: '内置默认值' }[PromptStore.source];
+  $('#saveStatus').innerHTML = (dirty ? '<b>● 有未保存修改</b> · ' : '')
+    + `当前来源:${src}` + (PromptStore.data.updatedAt ? ` · 上次保存 ${new Date(PromptStore.data.updatedAt).toLocaleString('zh-CN')}` : '');
+  const b = $('#srcBadge');
+  b.className = 'src-badge ' + (PromptStore.source === 'server' ? 'server' : PromptStore.source === 'local' ? 'local' : '');
+  b.textContent = { server: '服务端持久化', local: '仅存本机浏览器', default: '内置默认值' }[PromptStore.source];
+}
+
+/* ===================== 表单 ⇄ 数据 ===================== */
+function fillForm(d) {
+  $('#fSystem').value = d.system;
+  $('#fUser').value = d.userTemplate;
+  $('#fProdLine').value = d.productLine;
+  $('#fRepair').value = d.repairTemplate || PROMPT_DEFAULTS.repairTemplate;
+  renderStyles(d.styles);
+  renderTones(d.tones);
+  renderPvSelectors();
+  renderPreview();
+}
+function collect() {
+  return PromptStore.normalize({
+    system: $('#fSystem').value,
+    userTemplate: $('#fUser').value,
+    productLine: $('#fProdLine').value,
+    repairTemplate: $('#fRepair').value,
+    styles: draft.styles,
+    tones: draft.tones,
+    updatedAt: PromptStore.data.updatedAt,
+  });
+}
+
+/* ===================== 版本风格 ===================== */
+function renderStyles(list) {
+  draft.styles = list;
+  $('#styleList').innerHTML = list.map((s, i) => `
+    <div class="style-item">
+      <div class="style-top">
+        <span class="style-key">${esc(s.key || String.fromCharCode(65 + i))}</span>
+        <input type="text" value="${esc(s.name)}" placeholder="版本名称,如 版本 A · 热点借势" oninput="editStyle(${i},'name',this.value)">
+        <button class="icon-btn" title="上移" onclick="moveStyle(${i},-1)" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="icon-btn" title="下移" onclick="moveStyle(${i},1)" ${i === list.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="icon-btn del" title="删除" onclick="delStyle(${i})">✕</button>
+      </div>
+      <textarea rows="2" placeholder="该版本的创作要求,会注入 {{style.brief}}" oninput="editStyle(${i},'brief',this.value)">${esc(s.brief)}</textarea>
+    </div>`).join('');
+}
+function editStyle(i, k, v) { draft.styles[i][k] = v; dirty = true; paintStatus(); renderPvSelectors(true); renderPreview(); }
+function addStyle() {
+  draft.styles.push({ key: String.fromCharCode(65 + draft.styles.length), name: `版本 ${String.fromCharCode(65 + draft.styles.length)} · 新风格`, brief: '' });
+  renderStyles(draft.styles); markDirty(); renderPvSelectors();
+}
+function delStyle(i) {
+  if (draft.styles.length <= 1) { toast('至少保留 1 个版本风格'); return; }
+  draft.styles.splice(i, 1);
+  draft.styles.forEach((s, k) => s.key = String.fromCharCode(65 + k));
+  renderStyles(draft.styles); markDirty(); renderPvSelectors();
+}
+function moveStyle(i, d) {
+  const j = i + d; if (j < 0 || j >= draft.styles.length) return;
+  const t = draft.styles[i]; draft.styles[i] = draft.styles[j]; draft.styles[j] = t;
+  draft.styles.forEach((s, k) => s.key = String.fromCharCode(65 + k));
+  renderStyles(draft.styles); markDirty(); renderPvSelectors();
+}
+
+/* ===================== 语调 ===================== */
+function renderTones(list) {
+  draft.tones = list;
+  $('#toneChips').innerHTML = list.map((t, i) =>
+    `<span class="chip">${esc(t)}<button title="删除" onclick="delTone(${i})">✕</button></span>`).join('')
+    || '<span class="hint" style="margin:0">暂无语调,请至少添加一个</span>';
+}
+function addTone() {
+  const v = $('#newTone').value.trim();
+  if (!v) return;
+  if (draft.tones.includes(v)) { toast('该语调已存在'); return; }
+  draft.tones.push(v); $('#newTone').value = '';
+  renderTones(draft.tones); markDirty(); renderPvSelectors();
+}
+function delTone(i) {
+  if (draft.tones.length <= 1) { toast('至少保留 1 个语调'); return; }
+  draft.tones.splice(i, 1); renderTones(draft.tones); markDirty(); renderPvSelectors();
+}
+
+/* ===================== 变量参考表 ===================== */
+function renderVarTable() {
+  $('#varTable').innerHTML = PROMPT_VARS.map(([v, d]) =>
+    `<tr><td><code onclick="insertVar('${v}')" title="点击插入到用户提示词">${v}</code></td><td>${esc(d)}</td></tr>`).join('');
+  $('#prodVars').innerHTML = PRODUCT_VARS.map(([v, d]) => `<code>${v}</code> ${esc(d)}`).join(' · ');
+}
+function insertVar(v) {
+  const ta = $('#fUser'), p = ta.selectionStart || ta.value.length;
+  ta.value = ta.value.slice(0, p) + v + ta.value.slice(ta.selectionEnd || p);
+  ta.focus(); ta.selectionStart = ta.selectionEnd = p + v.length;
+  markDirty(); toast('已插入 ' + v);
+}
+
+/* ===================== 预览 ===================== */
+function renderPvSelectors(keepSel) {
+  const tSel = $('#pvTone'), sSel = $('#pvStyle');
+  const tv = keepSel ? tSel.value : null, sv = keepSel ? sSel.value : null;
+  tSel.innerHTML = draft.tones.map(t => `<option ${t === tv ? 'selected' : ''}>${esc(t)}</option>`).join('');
+  sSel.innerHTML = draft.styles.map((s, i) => `<option value="${i}" ${String(i) === sv ? 'selected' : ''}>${esc(s.name)}</option>`).join('');
+}
+function previewMessages() {
+  const backup = PromptStore.data;
+  PromptStore.data = collect();
+  const idx = Math.min(Number($('#pvStyle').value) || 0, PromptStore.data.styles.length - 1);
+  const msgs = PromptStore.buildMessages({
+    news: SAMPLE_CONTEXT.news,
+    products: SAMPLE_CONTEXT.products,
+    tone: $('#pvTone').value || PromptStore.data.tones[0],
+    style: PromptStore.data.styles[idx],
+  });
+  PromptStore.data = backup;
+  return msgs;
+}
+/* 高亮"模板里是变量、渲染后变成真实值"的片段 */
+function diffHighlight(tpl, rendered) {
+  const parts = String(tpl).split(/\{\{\s*[\w.]+\s*\}\}/g);
+  let out = '', pos = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const lit = parts[i];
+    const at = rendered.indexOf(lit, pos);
+    if (at < 0) return esc(rendered);                       // 对不齐则直接输出
+    if (at > pos) out += `<span class="v">${esc(rendered.slice(pos, at))}</span>`;
+    out += esc(lit);
+    pos = at + lit.length;
+  }
+  if (pos < rendered.length) out += `<span class="v">${esc(rendered.slice(pos))}</span>`;
+  return out;
+}
+function renderPreview() {
+  if (!draft) return;
+  const [sys, user] = previewMessages();
+  const tpls = [$('#fSystem').value, $('#fUser').value];
+  $('#preview').innerHTML = [sys, user].map((m, i) => `
+    <div class="msg-box">
+      <div class="msg-role"><span>${m.role.toUpperCase()}</span><span>${m.content.length} 字符</span></div>
+      <div class="msg-text">${diffHighlight(tpls[i], m.content)}</div>
+    </div>`).join('');
+}
+
+/* ===================== 保存 / 导入导出 / 重置 ===================== */
+async function saveAll() {
+  const btn = $('#saveBtn'); btn.disabled = true; btn.textContent = '保存中…';
+  try {
+    const where = await PromptStore.save(collect());
+    LlmStore.save(draftLlm());
+    paintModeBadge();
+    dirty = false; paintStatus();
+    toast(where === 'server' ? '已保存到服务端 prompts.json,工作台立即生效' : '已保存到本机浏览器,工作台立即生效', true);
+  } catch (e) {
+    toast('保存失败:' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '保存';
+  }
+}
+function resetAll() {
+  if (!confirm('确定把提示词、版本风格与语调全部恢复为内置默认值?保存后才会生效。')) return;
+  draft = JSON.parse(JSON.stringify(PROMPT_DEFAULTS));
+  fillForm(draft); markDirty(); toast('已恢复默认值,记得点击保存');
+}
+function resetField(...keys) {
+  keys.forEach(k => {
+    if (k === 'system') $('#fSystem').value = PROMPT_DEFAULTS.system;
+    if (k === 'userTemplate') $('#fUser').value = PROMPT_DEFAULTS.userTemplate;
+    if (k === 'productLine') $('#fProdLine').value = PROMPT_DEFAULTS.productLine;
+    if (k === 'repairTemplate') $('#fRepair').value = PROMPT_DEFAULTS.repairTemplate;
+  });
+  markDirty(); toast('本节已恢复默认,记得点击保存');
+}
+function exportJson() {
+  const blob = new Blob([JSON.stringify(collect(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'hotspot-prompts.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('已导出 hotspot-prompts.json', true);
+}
+function importJson(input) {
+  const f = input.files && input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      draft = PromptStore.normalize(JSON.parse(r.result));
+      fillForm(draft); markDirty(); toast('导入成功,请检查后保存', true);
+    } catch (e) { toast('导入失败:不是合法的 JSON'); }
+    input.value = '';
+  };
+  r.readAsText(f);
+}
+
+/* ===================== 模型参数 ===================== */
+const MODE_TIP = {
+  mock:  '不调用外部接口,使用工作台内置模板生成文案。适合离线演示。',
+  proxy: '请求发给本地 <code>node server.js</code> 的 <code>/api/llm</code>,由服务端附加密钥转发。密钥不进浏览器、不受 CORS 限制 —— 推荐。',
+  direct:'浏览器直接请求厂商接口,若对方未开放跨域(CORS)会被拦截,此时请改用服务端代理。',
+};
+function fillLlmForm() {
+  const c = LlmStore.cfg;
+  $('#fProvider').innerHTML = Object.keys(PROVIDERS).map(k =>
+    `<option value="${k}" ${c.provider === k ? 'selected' : ''}>${PROVIDERS[k].label}</option>`).join('');
+  $('#fBase').value = c.baseUrl;
+  $('#fModel').value = c.model;
+  $('#fKey').value = c.apiKey;
+  $('#fTemp').value = c.temperature; $('#tVal').textContent = c.temperature;
+  $('#fStream').checked = !!c.stream;
+  $('#modelList').innerHTML = ((PROVIDERS[c.provider] || {}).models || []).map(m => `<option value="${m}">`).join('');
+  pickMode(c.mode, true);
+  paintModeBadge();
+}
+function pickMode(m, silent) {
+  modeDraft = m;
+  document.querySelectorAll('#segMode button').forEach(b => {
+    const on = b.dataset.m === m;
+    b.className = 'btn ' + (on ? 'btn-primary' : 'btn-ghost');
+  });
+  $('#apiFields').style.display = m === 'mock' ? 'none' : '';
+  $('#modeTip').innerHTML = MODE_TIP[m];
+  $('#keyOpt').textContent = m === 'proxy'
+    ? (LlmStore.server.hasServerKey ? '(服务端已配置,可留空)' : '(服务端未配置,需在此填写)') : '';
+  if (!silent) markDirty();
+}
+function pickProvider(p) {
+  const v = PROVIDERS[p]; if (!v) return;
+  $('#fBase').value = v.base;
+  $('#fModel').value = v.models[0] || '';
+  $('#modelList').innerHTML = v.models.map(m => `<option value="${m}">`).join('');
+  markDirty();
+}
+function draftLlm() {
+  const p = $('#fProvider').value;
+  return {
+    mode: modeDraft, provider: p,
+    baseUrl: $('#fBase').value.trim() || PROVIDERS[p].base,
+    model: $('#fModel').value.trim() || (PROVIDERS[p].models[0] || ''),
+    apiKey: $('#fKey').value.trim(),
+    temperature: Number($('#fTemp').value),
+    stream: $('#fStream').checked,
+  };
+}
+function paintModeBadge() {
+  const live = LlmStore.cfg.mode !== 'mock';
+  const b = $('#modeBadge2');
+  b.className = 'src-badge ' + (live ? 'server' : '');
+  b.textContent = LlmStore.label();
+}
+async function testConn() {
+  const btn = $('#testBtn'), out = $('#testOut');
+  if (modeDraft === 'mock') { out.className = 'test-out ok'; out.textContent = '本地 Mock 模式无需连接测试。'; return; }
+  const backup = { ...LlmStore.cfg };
+  LlmStore.cfg = { ...backup, ...draftLlm(), temperature: 0.3 };
+  btn.disabled = true; btn.textContent = '测试中…'; out.className = 'test-out'; out.textContent = '';
+  const t0 = performance.now();
+  try {
+    const r = await llmChat([{ role: 'user', content: '只回复两个字:收到' }], { stream: false, max_tokens: 16 });
+    out.className = 'test-out ok';
+    out.textContent = `连接成功 · ${Math.round(performance.now() - t0)}ms · ${LlmStore.cfg.model}\n模型回复:${r.text || '(空)'}`
+      + (r.usage ? `\ntokens ↑${r.usage.prompt_tokens || 0} ↓${r.usage.completion_tokens || 0}` : '');
+  } catch (e) {
+    out.className = 'test-out bad'; out.textContent = '连接失败:' + e.message;
+  } finally {
+    LlmStore.cfg = backup; btn.disabled = false; btn.textContent = '测试连接';
+  }
+}
+
+/* ===================== 抓取源配置 ===================== */
+let sources = [];
+let sourcesAvailable = false;      // 服务端是否支持真实抓取
+
+async function loadSources() {
+  try {
+    const res = await fetch('/api/news/sources', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    sources = Array.isArray(j.sources) ? j.sources : [];
+    sourcesAvailable = true;
+  } catch (e) {
+    sources = [];
+    sourcesAvailable = false;
+  }
+  renderSources();
+}
+function renderSources() {
+  const box = $('#sourceList');
+  if (!sourcesAvailable) {
+    box.innerHTML = `<div class="hint" style="margin:0">未连接本地服务,无法配置真实抓取源。运行 <code>node server.js</code> 后刷新本页即可编辑。</div>`;
+    return;
+  }
+  if (!sources.length) { box.innerHTML = '<div class="hint" style="margin:0">暂无抓取源,请在下方添加。</div>'; return; }
+  box.innerHTML = sources.map((s, i) => `
+    <div class="style-item" style="display:flex;align-items:center;gap:12px">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink-2);flex-shrink:0">
+        <input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="toggleSource(${i}, this.checked)" style="accent-color:var(--brand)"> 启用
+      </label>
+      <span class="style-key" style="width:auto;padding:0 8px;border-radius:6px">${s.type === 'rss' ? 'RSS' : '热榜'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${esc(s.name)}</div>
+        <div style="font-size:11.5px;color:var(--ink-3);word-break:break-all">${esc(s.url || '内置接口 · ' + s.id)}</div>
+      </div>
+      <span id="srcStat-${i}" style="font-size:11.5px;color:var(--ink-3);flex-shrink:0"></span>
+      ${s.type === 'rss' ? `<button class="icon-btn del" title="删除" onclick="delSource(${i})">✕</button>` : ''}
+    </div>`).join('');
+}
+function toggleSource(i, on) { sources[i].enabled = on; saveSources(); }
+function delSource(i) { sources.splice(i, 1); renderSources(); saveSources(); }
+function addSource() {
+  const name = $('#newSrcName').value.trim(), url = $('#newSrcUrl').value.trim();
+  if (!name || !url) { toast('请填写源名称与 RSS 地址'); return; }
+  if (!/^https?:\/\//i.test(url)) { toast('地址必须以 http(s):// 开头'); return; }
+  sources.push({ id: 'rss-' + Date.now().toString(36), name, url, type: 'rss', enabled: true });
+  $('#newSrcName').value = ''; $('#newSrcUrl').value = '';
+  renderSources(); saveSources();
+}
+async function saveSources() {
+  try {
+    const res = await fetch('/api/news/sources', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sources }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    toast('抓取源已保存', true);
+  } catch (e) { toast('抓取源保存失败:' + e.message); }
+}
+async function testSources() {
+  const btn = $('#srcTestBtn'), out = $('#srcTestOut');
+  btn.disabled = true; btn.textContent = '抓取中…';
+  out.className = 'test-out'; out.textContent = '';
+  try {
+    const res = await fetch('/api/news?force=1', { cache: 'no-store' });
+    const j = await res.json();
+    if (!res.ok) throw new Error((j.error && j.error.message) || 'HTTP ' + res.status);
+    sources.forEach((s, i) => {
+      const st = (j.sources || []).find(x => x.id === s.id);
+      const el = document.getElementById('srcStat-' + i);
+      if (el) el.innerHTML = !st ? '<span style="color:var(--ink-3)">未启用</span>'
+        : st.ok ? `<b style="color:var(--green)">✓ ${st.count} 条 · ${st.ms}ms</b>`
+        : `<b style="color:var(--red)" title="${esc(st.error || '')}">✗ ${esc((st.error || '').slice(0, 24))}</b>`;
+    });
+    out.className = 'test-out ok';
+    out.textContent = `抓取完成:${(j.sources || []).filter(s => s.ok).length}/${(j.sources || []).length} 个源可用,聚合去重后 ${j.items.length} 条`
+      + (j.riskCount ? `,其中 ${j.riskCount} 条被标记为禁止借势` : '');
+  } catch (e) {
+    out.className = 'test-out bad'; out.textContent = '抓取失败:' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '测试全部源';
+  }
+}
+
+/* ===================== 试运行 ===================== */
+async function tryRun() {
+  const btn = $('#runBtn'), out = $('#runOut'), meta = $('#runMeta');
+  if (modeDraft === 'mock') { toast('当前是本地 Mock 模式,请先切换为服务端代理或浏览器直连'); return; }
+  const backup = { ...LlmStore.cfg };
+  LlmStore.cfg = { ...backup, ...draftLlm() };
+  btn.disabled = true; btn.textContent = '生成中…';
+  out.textContent = ''; meta.textContent = '';
+  const t0 = performance.now();
+  try {
+    const r = await llmChat(previewMessages(), {
+      stream: LlmStore.cfg.stream,
+      onDelta: t => { out.innerHTML = esc(t) + '<span class="stream-cursor"></span>'; },
+    });
+    out.textContent = r.text || '(模型返回为空)';
+    meta.textContent = `${LlmStore.cfg.model} · ${((performance.now() - t0) / 1000).toFixed(1)}s · ${r.text.length} 字`
+      + (r.usage ? ` · ↑${r.usage.prompt_tokens || 0} ↓${r.usage.completion_tokens || 0} tokens` : '');
+  } catch (e) {
+    out.textContent = '生成失败:' + e.message;
+  } finally {
+    LlmStore.cfg = backup; btn.disabled = false; btn.textContent = '试运行(调用大模型)';
+  }
+}
+
+/* ===================== 交互杂项 ===================== */
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveAll(); }
+});
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+document.querySelectorAll('.nav-item').forEach(a => a.addEventListener('click', () => {
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('on'));
+  a.classList.add('on');
+}));
+$('.main').addEventListener('scroll', () => {
+  const secs = [...document.querySelectorAll('section.card')];
+  const top = $('.main').scrollTop + 120;
+  let cur = secs[0].id;
+  secs.forEach(s => { if (s.offsetTop <= top) cur = s.id; });
+  document.querySelectorAll('.nav-item').forEach(a =>
+    a.classList.toggle('on', a.getAttribute('href') === '#' + cur));
+});
+
+/* ===================== 启动 ===================== */
+(async function init() {
+  LlmStore.load();
+  renderVarTable();
+  await LlmStore.probeServer();
+  await PromptStore.load();
+  draft = PromptStore.normalize(PromptStore.data);
+  fillForm(draft);
+  fillLlmForm();
+  paintStatus();
+  loadSources();
+})();
+</script>
+</body>
+</html>

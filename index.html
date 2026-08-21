@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>热点营销工作台 · HotSpot Studio</title>
+<style>
+  :root {
+    --brand: #5b5bf6;
+    --brand-dark: #4747d1;
+    --brand-light: #eeeefe;
+    --brand-lighter: #f6f6ff;
+    --ink: #1a1d29;
+    --ink-2: #4b5063;
+    --ink-3: #8a90a6;
+    --bg: #f7f8fb;
+    --card: #ffffff;
+    --line: #e6e8f0;
+    --green: #16a34a;
+    --green-bg: #f2fbf5;
+    --orange: #ea580c;
+    --orange-bg: #fdf6f0;
+    --red: #dc2626;
+    --red-bg: #fdf4f4;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(26,29,41,.05);
+    --shadow-lg: 0 2px 8px rgba(26,29,41,.07);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+  /* ============ Top Header ============ */
+  .header {
+    height: 56px;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--brand);
+    display: grid; place-items: center;
+    color: #fff; font-weight: 800; font-size: 16px;
+    
+  }
+  .logo-name { font-size: 16px; font-weight: 700; letter-spacing: .2px; }
+  .logo-sub { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-left: 2px; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .env-badge {
+    font-size: 11px; font-weight: 600; color: var(--brand);
+    background: var(--brand-light); border: 1px solid #d8d8fb;
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .user-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 5px 12px 5px 6px; border-radius: 999px;
+    border: 1px solid var(--line); background: #fff;
+    transition: box-shadow .15s;
+  }
+  .user-chip:hover { box-shadow: var(--shadow); }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: #6b7280;
+    display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px;
+  }
+  .user-meta { line-height: 1.25; text-align: left; }
+  .user-name { font-size: 13px; font-weight: 600; }
+  .user-status { font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 4px; }
+  .user-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* ============ Layout ============ */
+  .layout { flex: 1; display: flex; min-height: 0; }
+
+  /* ============ Sidebar ============ */
+  .sidebar {
+    width: 232px; flex-shrink: 0;
+    background: #fff; border-right: 1px solid var(--line);
+    padding: 20px 14px;
+    display: flex; flex-direction: column;
+  }
+  .sidebar-title {
+    font-size: 11px; font-weight: 700; color: var(--ink-3);
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 0 10px 12px;
+  }
+  .step-item {
+    width: 100%;
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 10px; border-radius: 10px;
+    text-align: left; position: relative;
+    transition: background .15s;
+    margin-bottom: 2px;
+  }
+  .step-item:hover { background: var(--brand-lighter); }
+  .step-item.active { background: var(--brand-light); }
+  .step-item .step-num {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+    background: var(--bg); color: var(--ink-3);
+    border: 1.5px solid var(--line);
+    margin-top: 1px;
+    transition: all .15s;
+  }
+  .step-item.active .step-num { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .step-item.done .step-num { background: var(--green-bg); color: var(--green); border-color: #bbf0cd; }
+  .step-item .step-text { min-width: 0; }
+  .step-item .step-label { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .step-item.active .step-label { color: var(--brand-dark); }
+  .step-item .step-hint {
+    font-size: 11.5px; color: var(--ink-3);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 150px;
+  }
+  .step-item .step-hint.filled { color: var(--green); font-weight: 500; }
+  .step-connector { width: 1.5px; height: 10px; background: var(--line); margin-left: 21px; }
+  .sidebar-foot {
+    margin-top: auto; padding: 12px 10px 4px;
+    border-top: 1px dashed var(--line);
+    font-size: 11.5px; color: var(--ink-3); line-height: 1.7;
+  }
+  .sidebar-foot b { color: var(--ink-2); }
+
+  /* ============ Workspace ============ */
+  .workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .context-bar {
+    padding: 10px 24px;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12.5px; color: var(--ink-3);
+    flex-shrink: 0; min-height: 42px;
+    overflow: hidden; white-space: nowrap;
+  }
+  .ctx-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--bg); border: 1px solid var(--line);
+    padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; color: var(--ink-2); font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; max-width: 320px;
+  }
+  .ctx-tag.hot { background: var(--orange-bg); border-color: #fcd9bd; color: var(--orange); }
+  .ctx-arrow { color: #c5c9d6; }
+  .main {
+    flex: 1; overflow-y: auto; padding: 24px;
+  }
+  .page-head { margin-bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .page-title { font-size: 20px; font-weight: 700; letter-spacing: .2px; }
+  .page-desc { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+
+  /* ============ Buttons ============ */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    transition: all .15s;
+    border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--brand); color: #fff;  }
+  .btn-primary:hover { background: var(--brand-dark); }
+  .btn-primary:disabled { background: #c3c4e8; cursor: not-allowed; box-shadow: none; }
+  .btn-ghost { background: #fff; color: var(--ink-2); border-color: var(--line); }
+  .btn-ghost:hover { border-color: #c8cbdc; color: var(--ink); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: #128a3f; }
+  .btn-sm { padding: 5px 12px; font-size: 12.5px; border-radius: 8px; }
+  .btn-lg { padding: 11px 26px; font-size: 14.5px; border-radius: 10px; }
+
+  /* ============ Cards / generic ============ */
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px;
+  }
+  .badge-hot { background: var(--red-bg); color: var(--red); }
+  .badge-rise { background: var(--orange-bg); color: var(--orange); }
+  .badge-new { background: var(--brand-light); color: var(--brand); }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-gray { background: var(--bg); color: var(--ink-3); }
+  .badge-live { background: #e6fbf0; color: #0d9488; }
+  .badge-dup { background: #f1f0ff; color: #6d5ce0; }
+
+  /* 借势风险提示 */
+  .risk-note {
+    font-size: 11.5px; line-height: 1.55; border-radius: 8px;
+    padding: 6px 9px; margin-bottom: 10px;
+  }
+  .risk-note.block { background: var(--red-bg); color: #991b1b; border: 1px solid #fecaca; }
+  .risk-note.warn { background: var(--orange-bg); color: #9a3412; border: 1px solid #fcd9bd; }
+  .news-card.blocked { opacity: .72; }
+  .news-card.blocked:hover { transform: none; border-color: #fecaca; box-shadow: var(--shadow); cursor: not-allowed; }
+
+  /* ============ Step 1: News ============ */
+  .crawl-panel {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px; margin-bottom: 18px;
+    background: #fff;
+  }
+  .crawl-panel .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 0 0 rgba(22,163,74,.5); animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(22,163,74,.45); }
+    70% { box-shadow: 0 0 0 8px rgba(22,163,74,0); }
+    100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+  }
+  .crawl-meta { flex: 1; font-size: 12.5px; color: var(--ink-3); }
+  .crawl-meta b { color: var(--ink-2); font-weight: 600; }
+  .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+  .news-card {
+    padding: 16px 18px; cursor: pointer; position: relative;
+    transition: all .18s;
+    border: 1.5px solid var(--line);
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .news-card:hover { border-color: #c9ccdd; }
+  .news-card.selected { border-color: var(--brand); background: var(--brand-lighter); }
+  .news-card.selected::after {
+    content: "✓ 已选为爆款热点";
+    position: absolute; top: -1.5px; right: -1.5px;
+    background: var(--brand); color: #fff;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 12px; border-radius: 0 var(--radius) 0 10px;
+  }
+  .news-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .news-source { font-size: 11.5px; color: var(--ink-3); }
+  .news-title { font-size: 15px; font-weight: 700; line-height: 1.45; margin-bottom: 6px; }
+  .news-summary {
+    font-size: 12.5px; color: var(--ink-2); margin-bottom: 12px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .news-foot { display: flex; align-items: center; justify-content: space-between; }
+  .heat { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-3); }
+  .heat-bar { width: 72px; height: 5px; border-radius: 3px; background: var(--bg); overflow: hidden; }
+  .heat-bar i { display: block; height: 100%; border-radius: 3px; background: var(--ink-3); }
+  .heat-val { font-weight: 700; color: var(--orange); font-variant-numeric: tabular-nums; }
+
+  /* ============ Product cards ============ */
+  .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .prod-card {
+    background: var(--card); border: 1.5px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: hidden; position: relative; transition: all .18s;
+    display: flex; flex-direction: column;
+  }
+  .prod-card:hover { border-color: #c9ccdd; }
+  .prod-card.selected { border-color: var(--brand); }
+  .prod-img {
+    height: 120px; display: grid; place-items: center;
+    font-size: 30px; position: relative;
+  }
+  .match-pill {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(26,29,41,.72); color: #fff;
+    backdrop-filter: blur(4px);
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .match-pill b { color: #7ef0a5; }
+  .prod-body { padding: 12px 14px 14px; display: flex; flex-direction: column; flex: 1; }
+  .prod-name { font-size: 13.5px; font-weight: 700; line-height: 1.4; margin-bottom: 4px; }
+  .prod-points { font-size: 11.5px; color: var(--ink-3); margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .prod-points span { background: var(--bg); padding: 1px 7px; border-radius: 5px; }
+  .prod-reason {
+    font-size: 11.5px; color: var(--brand-dark); background: var(--brand-lighter);
+    border: 1px dashed #d4d4fb; border-radius: 8px;
+    padding: 6px 9px; margin-bottom: 10px; line-height: 1.5;
+  }
+  .prod-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
+  .prod-price { font-size: 16px; font-weight: 800; color: var(--red); }
+  .prod-price small { font-size: 11px; font-weight: 500; }
+  .prod-price .orig { font-size: 11px; color: var(--ink-3); text-decoration: line-through; font-weight: 400; margin-left: 4px; }
+
+  /* ============ Step 3 toolbar ============ */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1; min-width: 220px; max-width: 360px;
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border: 1px solid var(--line); border-radius: 9px;
+    padding: 8px 12px;
+  }
+  .search-box input { border: none; outline: none; flex: 1; font-size: 13px; font-family: inherit; background: transparent; }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 500;
+    background: #fff; border: 1px solid var(--line); color: var(--ink-2);
+    transition: all .15s;
+  }
+  .filter-chip:hover { border-color: #c8cbdc; }
+  .filter-chip.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .select-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(255,255,255,.92); border: 1.5px solid var(--line);
+    display: grid; place-items: center;
+    font-size: 13px; color: transparent; font-weight: 700;
+    transition: all .15s;
+  }
+  .prod-card.selected .select-check { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+  /* ============ Step 4 ============ */
+  .gen-layout { display: grid; grid-template-columns: 330px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 1080px) { .gen-layout { grid-template-columns: 1fr; } }
+  .ingredient { padding: 16px 18px; }
+  .ingredient h4 {
+    font-size: 12px; color: var(--ink-3); font-weight: 700;
+    letter-spacing: 1px; margin-bottom: 10px;
+  }
+  .ing-news {
+    background: var(--orange-bg); border: 1px solid #fcd9bd; border-radius: 10px;
+    padding: 10px 12px; font-size: 13px; font-weight: 600; line-height: 1.5; margin-bottom: 14px;
+  }
+  .ing-prod {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line);
+    margin-bottom: 8px; background: #fff;
+  }
+  .ing-prod .thumb {
+    width: 38px; height: 38px; border-radius: 9px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 16px;
+  }
+  .ing-prod .n { font-size: 12.5px; font-weight: 600; line-height: 1.35; }
+  .ing-prod .p { font-size: 11.5px; color: var(--red); font-weight: 700; }
+  .tone-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .llm-note {
+    font-size: 11.5px; color: var(--ink-3); line-height: 1.6;
+    border-top: 1px dashed var(--line); padding-top: 10px;
+  }
+  .llm-note code { background: var(--bg); padding: 1px 6px; border-radius: 5px; font-size: 11px; }
+
+  .output-panel { padding: 0; overflow: hidden; }
+  .version-tabs { display: flex; border-bottom: 1px solid var(--line); background: #fafbfe; }
+  .version-tab {
+    padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--ink-3);
+    border-bottom: 2px solid transparent; transition: all .15s;
+  }
+  .version-tab:hover { color: var(--ink-2); }
+  .version-tab.on { color: var(--brand); border-bottom-color: var(--brand); background: #fff; }
+  .output-body { padding: 20px 22px; min-height: 300px; }
+  .copy-text {
+    white-space: pre-wrap; font-size: 14.5px; line-height: 1.9;
+    background: var(--brand-lighter); border: 1px solid #e3e3fc;
+    border-radius: 12px; padding: 18px 20px;
+  }
+  .output-actions { display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
+  .char-count { font-size: 12px; color: var(--ink-3); margin-left: auto; }
+  .empty-state {
+    display: grid; place-items: center; text-align: center;
+    min-height: 300px; color: var(--ink-3);
+  }
+  .empty-state .icon { font-size: 22px; color: #c9ccdd; margin-bottom: 6px; line-height: 1; }
+  .empty-state .t { font-size: 15px; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; }
+  .empty-state .d { font-size: 12.5px; max-width: 320px; line-height: 1.7; }
+
+  /* Loading */
+  .gen-loading { display: grid; place-items: center; min-height: 300px; text-align: center; }
+  .spinner {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 3.5px solid var(--brand-light); border-top-color: var(--brand);
+    animation: spin .8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .gen-loading .t { font-size: 14px; font-weight: 600; color: var(--brand-dark); }
+  .gen-loading .d { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+
+  /* ============ Step 5 ============ */
+  .review-layout { display: grid; grid-template-columns: 460px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 1080px) { .review-layout { grid-template-columns: 1fr; } }
+  .weibo-card { overflow: hidden; }
+  .weibo-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px 0; }
+  .weibo-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: #e5e7eb; color: var(--ink-2);
+    display: grid; place-items: center; color: #fff; font-size: 19px;
+  }
+  .weibo-name { font-size: 14px; font-weight: 700; color: #eb7350; }
+  .weibo-time { font-size: 11.5px; color: var(--ink-3); }
+  .weibo-body { padding: 10px 16px 14px; font-size: 14px; line-height: 1.85; white-space: pre-wrap; }
+  .weibo-body .hl { color: #eb7350; }
+  .weibo-imgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 0 16px 14px; }
+  .weibo-imgs .im { aspect-ratio: 1; border-radius: 8px; display: grid; place-items: center; font-size: 24px; border: 1px solid var(--line); }
+  .weibo-foot {
+    display: flex; border-top: 1px solid var(--line);
+    color: var(--ink-3); font-size: 12.5px;
+  }
+  .weibo-foot span { flex: 1; text-align: center; padding: 10px 0; }
+  .review-panel { padding: 18px 20px; }
+  .review-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px dashed var(--line);
+    font-size: 13px;
+  }
+  .review-row .k { color: var(--ink-3); }
+  .review-row .v { font-weight: 600; text-align: right; max-width: 60%; }
+  .checklist { margin: 14px 0 18px; }
+  .check-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); padding: 4px 0; }
+  .check-item .ok { color: var(--green); font-weight: 700; }
+  .send-area { display: flex; gap: 10px; margin-top: 6px; }
+
+  /* ============ Toast ============ */
+  .toast {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-16px);
+    background: var(--ink); color: #fff;
+    font-size: 13px; font-weight: 500;
+    padding: 10px 20px; border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0; pointer-events: none;
+    transition: all .25s; z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--green); }
+
+  /* Footer next-step bar */
+  .next-bar {
+    display: flex; justify-content: flex-end; align-items: center; gap: 12px;
+    margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);
+  }
+  .next-bar .hint { font-size: 12.5px; color: var(--ink-3); margin-right: auto; }
+
+  /* ============ 手工 / 自动 模式切换 ============ */
+  .mode-seg {
+    display: flex; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px; gap: 2px;
+  }
+  .mode-seg button {
+    padding: 4px 14px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 600; color: var(--ink-3);
+    transition: all .15s;
+  }
+  .mode-seg button.on { background: #fff; color: var(--brand-dark); box-shadow: 0 1px 3px rgba(26,29,41,.12); }
+  .mode-seg button.on.auto { color: #b45309; }
+  .bell {
+    position: relative; height: 30px; padding: 0 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: #fff;
+    font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+    display: grid; place-items: center; transition: all .15s;
+  }
+  .bell:hover { border-color: #c8cbdc; }
+  .bell .dot {
+    position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px;
+    border-radius: 999px; background: var(--red); color: #fff;
+    font-size: 10px; font-weight: 700; display: grid; place-items: center; padding: 0 4px;
+  }
+
+  /* ============ 自动流水线 ============ */
+  .auto-hero {
+    padding: 18px 20px; margin-bottom: 16px;
+    background: #fff;
+  }
+  .auto-hero h3 { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+  .auto-hero .d { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; }
+  .cfg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .cfg-item label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+  .cfg-item .val { font-weight: 800; color: var(--brand); font-variant-numeric: tabular-nums; }
+  .cfg-item input[type=range] { width: 100%; accent-color: var(--brand); }
+  .cfg-item select, .cfg-item input[type=number] {
+    width: 100%; padding: 7px 10px; font-size: 13px; font-family: inherit;
+    border: 1px solid var(--line); border-radius: 9px; outline: none;
+  }
+  .cfg-item .tip { font-size: 11px; color: var(--ink-3); margin-top: 4px; line-height: 1.5; }
+  .lock-note {
+    display: flex; align-items: center; gap: 8px; margin-top: 14px;
+    font-size: 12px; color: #92400e; background: var(--orange-bg);
+    border: 1px solid #fcd9bd; border-radius: 9px; padding: 8px 12px;
+  }
+  .stage-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .stage {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; color: var(--ink-3);
+    background: var(--bg); border: 1px solid var(--line);
+    padding: 5px 12px; border-radius: 999px;
+  }
+  .stage.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .stage.done { background: var(--green-bg); border-color: #bbf0cd; color: var(--green); }
+  .stage-sep { color: #c5c9d6; font-size: 12px; }
+  .countdown {
+    display: flex; align-items: center; gap: 12px;
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+    padding: 12px 16px; margin-top: 12px;
+  }
+  .countdown .num {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: var(--orange); color: #fff; font-size: 17px; font-weight: 800;
+    display: grid; place-items: center;
+  }
+
+  /* 自动发送清单 */
+  .auto-item {
+    display: flex; gap: 12px; padding: 13px 15px;
+    border: 1px solid var(--line); border-radius: 11px; margin-bottom: 10px; background: #fff;
+  }
+  .auto-item .st {
+    width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 13px;
+  }
+  .st.sent { background: var(--green-bg); color: var(--green); }
+  .st.review { background: var(--orange-bg); color: var(--orange); }
+  .st.skip { background: var(--bg); color: var(--ink-3); }
+  .st.fail { background: var(--red-bg); color: var(--red); }
+  .st.recalled { background: var(--red-bg); color: var(--red); }
+  .auto-item .body { min-width: 0; flex: 1; }
+  .auto-item .t { font-size: 13px; font-weight: 700; line-height: 1.45; }
+  .auto-item .m { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; }
+  .auto-item .copy {
+    font-size: 12px; color: var(--ink-2); background: var(--bg);
+    border-radius: 8px; padding: 8px 10px; margin-top: 8px;
+    white-space: pre-wrap; max-height: 88px; overflow: hidden; position: relative; line-height: 1.7;
+  }
+  .auto-item .why {
+    font-size: 11.5px; margin-top: 7px; padding: 6px 9px; border-radius: 7px;
+    background: var(--orange-bg); color: #9a3412; border: 1px solid #fcd9bd; line-height: 1.55;
+  }
+  .auto-acts { display: flex; gap: 6px; margin-top: 9px; }
+
+  /* 右侧抽屉 */
+  .drawer-mask {
+    position: fixed; inset: 0; background: rgba(18,20,30,.35);
+    opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 150;
+  }
+  .drawer-mask.show { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 460px; max-width: 92vw;
+    background: #fff; box-shadow: -8px 0 40px rgba(26,29,41,.18);
+    transform: translateX(100%); transition: transform .22s;
+    z-index: 151; display: flex; flex-direction: column;
+  }
+  .drawer.show { transform: none; }
+  .drawer-head {
+    padding: 16px 18px 14px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 16px 18px; background: var(--bg); }
+  .drawer-foot { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: center; }
+
+  /* ============ 模型设置 Modal ============ */
+  .modal-mask {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(18,20,30,.45); backdrop-filter: blur(3px);
+    display: none; place-items: center;
+  }
+  .modal-mask.show { display: grid; }
+  .modal {
+    width: 540px; max-width: calc(100vw - 32px); max-height: calc(100vh - 72px);
+    background: #fff; border-radius: 16px; box-shadow: 0 24px 70px rgba(0,0,0,.3);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .modal-head {
+    padding: 16px 20px 14px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .modal-body { padding: 18px 20px 6px; overflow-y: auto; }
+  .modal-foot {
+    padding: 12px 20px 16px; border-top: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1; padding: 8px 6px; border-radius: 10px;
+    border: 1.5px solid var(--line); background: #fff;
+    font-size: 12.5px; font-weight: 600; color: var(--ink-2); line-height: 1.45;
+    transition: all .15s;
+  }
+  .seg button small { display: block; font-size: 10.5px; font-weight: 400; color: var(--ink-3); }
+  .seg button:hover { border-color: #c8cbdc; }
+  .seg button.on { border-color: var(--brand); background: var(--brand-lighter); color: var(--brand-dark); }
+  .seg button.on small { color: var(--brand); }
+  .field { margin-bottom: 14px; }
+  .field > label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+  .field input[type="text"], .field input[type="password"], .field select {
+    width: 100%; padding: 9px 12px; font-size: 13px; font-family: inherit;
+    border: 1px solid var(--line); border-radius: 9px; outline: none; background: #fff; color: var(--ink);
+    transition: all .15s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light); }
+  .field input[type="range"] { width: 100%; accent-color: var(--brand); }
+  .field input[type="checkbox"] { width: auto; accent-color: var(--brand); vertical-align: -1px; }
+  .field .tip { font-size: 11.5px; color: var(--ink-3); margin-top: 5px; line-height: 1.65; }
+  .field .tip code, .llm-note code { background: var(--bg); padding: 1px 5px; border-radius: 5px; font-size: 11px; }
+  .test-out {
+    font-size: 12px; line-height: 1.7; border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 14px; white-space: pre-wrap; word-break: break-all;
+  }
+  .test-out.ok { background: var(--green-bg); border: 1px solid #bbf0cd; color: #14532d; }
+  .test-out.bad { background: var(--red-bg); border: 1px solid #fecaca; color: #991b1b; }
+  .model-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; font-weight: 600;
+    padding: 4px 11px; border-radius: 999px;
+    border: 1px solid #d8d8fb; background: var(--brand-light); color: var(--brand);
+    transition: all .15s;
+  }
+  .model-badge:hover { background: #e5e5fd; }
+  .model-badge.live { background: var(--green-bg); border-color: #bbf0cd; color: var(--green); }
+
+  /* 流式输出 */
+  .stream-cursor {
+    display: inline-block; width: 7px; height: 15px; background: var(--brand);
+    vertical-align: -2px; margin-left: 2px; animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .version-tab .v-ic { font-size: 11px; margin-right: 5px; color: var(--ink-3); }
+  .version-tab.err { color: var(--red); }
+  .err-box {
+    background: var(--red-bg); border: 1px solid #fecaca; color: #991b1b;
+    border-radius: 10px; padding: 12px 14px; font-size: 12.5px; line-height: 1.75;
+  }
+
+  /* 发布前合规校验条 */
+  .compliance {
+    display: flex; align-items: flex-start; gap: 10px;
+    border-radius: 9px; padding: 9px 12px; margin-top: 12px;
+    font-size: 12px; line-height: 1.65; border: 1px solid var(--line); background: var(--bg);
+  }
+  .compliance.pass { background: var(--green-bg); border-color: #cdeed8; color: #15803d; }
+  .compliance.warn { background: var(--orange-bg); border-color: #f6ddc8; color: #b45309; }
+  .compliance.fail { background: var(--red-bg); border-color: #f6d4d4; color: #b91c1c; }
+  .compliance .cs { font-weight: 700; flex-shrink: 0; }
+  .compliance .cb { flex: 1; min-width: 0; }
+  .compliance .fixes { margin-top: 3px; opacity: .92; }
+  .repair-log {
+    font-size: 11.5px; color: var(--ink-3); margin-top: 8px; line-height: 1.7;
+    border-top: 1px dashed var(--line); padding-top: 8px;
+  }
+  .repair-log b { color: var(--green); }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d4d7e3; border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<!-- ============ Top Header ============ -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">H</div>
+    <div>
+      <span class="logo-name">热点营销工作台</span>
+      <span class="logo-sub">HotSpot Studio</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="mode-seg" id="modeSeg">
+      <button data-mode="manual" onclick="setMode('manual')">手工模式</button>
+      <button data-mode="auto" onclick="setMode('auto')">自动模式</button>
+    </div>
+    <button class="bell" id="bellBtn" onclick="openDrawer()" title="自动发送清单">清单<span class="dot" id="bellDot" style="display:none">0</span></button>
+    <button class="model-badge" id="modeBadge" onclick="openSettings()">模型设置</button>
+    <a class="btn btn-ghost btn-sm" href="admin.html" style="text-decoration:none">后台管理</a>
+    <button class="user-chip" onclick="toast('个人中心(原型占位)')">
+      <div class="avatar">运</div>
+      <div class="user-meta">
+        <div class="user-name">运营小蜜 · Yuki</div>
+        <div class="user-status">已登录 · 电商运营组</div>
+      </div>
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- ============ Left Sidebar ============ -->
+  <nav class="sidebar">
+    <div class="sidebar-title">营销流程 Pipeline</div>
+    <div id="stepNav"></div>
+    <div class="sidebar-foot">
+      <b>大模型已接入</b><br>
+      支持 DeepSeek 及任意 OpenAI 兼容接口;提示词可在 <a href="admin.html" style="color:var(--brand)">后台管理</a> 中修改。
+    </div>
+  </nav>
+
+  <!-- ============ Workspace ============ -->
+  <div class="workspace">
+    <div class="context-bar" id="contextBar"></div>
+    <main class="main" id="main"></main>
+  </div>
+</div>
+
+<!-- ============ 模型设置弹窗 ============ -->
+<div class="modal-mask" id="settingsMask" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div style="font-size:16px;font-weight:700">模型设置</div>
+        <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Step 4 文案生成所使用的大模型接入方式</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>接入方式</label>
+        <div class="seg" id="segMode">
+          <button data-m="mock"   onclick="pickMode('mock')">本地 Mock<small>离线演示</small></button>
+          <button data-m="proxy"  onclick="pickMode('proxy')">服务端代理<small>推荐 · 密钥不出端</small></button>
+          <button data-m="direct" onclick="pickMode('direct')">浏览器直连<small>需接口支持 CORS</small></button>
+        </div>
+        <div class="tip" id="modeTip"></div>
+      </div>
+      <div id="apiFields">
+        <div class="field">
+          <label>服务商</label>
+          <select id="fProvider" onchange="pickProvider(this.value)"></select>
+        </div>
+        <div class="field">
+          <label>Base URL</label>
+          <input type="text" id="fBase" placeholder="https://api.deepseek.com/v1">
+          <div class="tip">统一按 OpenAI 协议请求 <code>{Base URL}/chat/completions</code>。</div>
+        </div>
+        <div class="field">
+          <label>模型</label>
+          <input type="text" id="fModel" list="modelList" placeholder="deepseek-chat">
+          <datalist id="modelList"></datalist>
+          <div class="tip"><code>deepseek-chat</code>=DeepSeek-V3(快,推荐);<code>deepseek-reasoner</code>=DeepSeek-R1(带思维链,较慢)。</div>
+        </div>
+        <div class="field">
+          <label>API Key <span id="keyOpt" style="font-weight:400;color:var(--ink-3)"></span></label>
+          <input type="password" id="fKey" autocomplete="off" placeholder="sk-··················">
+          <div class="tip">该密钥仅保存在你本机浏览器的 localStorage,供 Demo 使用。生产环境请使用「服务端代理」模式,把密钥写在服务端 <code>.env</code> 中。</div>
+        </div>
+        <div class="field">
+          <label>创意温度 temperature · <b id="tVal">1.5</b></label>
+          <input type="range" id="fTemp" min="0" max="2" step="0.1" oninput="document.getElementById('tVal').textContent=this.value">
+          <div class="tip">DeepSeek 官方建议:创意写作 1.5,通用对话 1.3,数据抽取 1.0。</div>
+        </div>
+        <div class="field">
+          <label><input type="checkbox" id="fStream"> 流式输出(打字机效果)</label>
+        </div>
+      </div>
+      <div id="testOut"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" id="testBtn" onclick="testConn()">测试连接</button>
+      <span style="flex:1"></span>
+      <button class="btn btn-ghost" onclick="closeSettings()">取消</button>
+      <button class="btn btn-primary" onclick="saveSettings()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 自动发送清单抽屉 ============ -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div style="font-size:16px;font-weight:700">自动发送清单</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:2px" id="drawerSub"></div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot">
+    <span style="font-size:11.5px;color:var(--ink-3);flex:1" id="drawerFootNote"></span>
+    <button class="btn btn-ghost btn-sm" onclick="exportAutoList()">导出</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearAutoList()">清空</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="dedupe.js"></script>
+<script src="eval.js"></script>
+<script src="prompts.js"></script>
+<script src="llm.js"></script>
+<script>
+/* =================================================================
+ * Mock 数据层 —— 后续可替换为真实抓取 API / 商品库接口
+ * ================================================================= */
+/* 数据层已抽离至 data.js(工作台与评测台共用) */
+
+/* =================================================================
+ * 全局状态 —— 保证 5 个步骤间上下文连贯
+ * ================================================================= */
+const state = {
+  mode: 'manual',        // manual 手工模式 | auto 自动流水线
+  autoCfg: null,         // 自动化规则(启动时载入)
+  autoList: [],          // 自动发送清单
+  autoUnread: 0,
+  autoRunning: false,
+  autoStage: -1,
+  autoLog: [],
+  autoPending: null,     // 正在倒计时待发送的条目
+  autoStop: false,
+  autoCancelSend: false,
+  autoAbort: null,
+  step: 1,
+  newsId: null,          // Step1 选中的热点
+  selectedPids: [],      // Step2/3 选定的商品
+  tone: '热点借势',       // Step4 语调
+  versions: null,        // Step4 多版本文案 [{name, text, status, err}]
+  activeVersion: 0,
+  generating: false,
+  llmMeta: null,         // 本次生成的模型/耗时/token 信息
+  llmError: null,        // 生成失败原因
+  abort: null,           // 中止控制器
+  reviewed: false,       // Step5 审核状态
+  sent: false,
+  catFilter: '全部',
+  search: '',
+  lastCrawl: '10:42:17',
+  liveNews: false,       // 当前列表是否来自真实抓取
+  crawling: false,
+  crawlSources: null,    // 各抓取源的状态
+  crawlError: null,
+};
+
+/* 运行时的新闻列表:真实抓取成功后替换掉 Mock */
+let newsList = NEWS;
+/* 运行时商品库:后台「商品库管理」保存后会覆盖内置 PRODUCTS */
+let productList = PRODUCTS;
+
+const $ = (sel) => document.querySelector(sel);
+const news = () => newsList.find(n => n.id === state.newsId);
+/* 匹配关系:只有在用内置演示商品库时才使用人工标注的 MATCH_MAP,
+   一旦后台换过商品库(pid 不再对应),就统一走匹配算法现算 */
+let useMatchMap = true;
+const matchesFor = (n) => {
+  if (!n) return [];
+  if (useMatchMap && MATCH_MAP[n.id]) return MATCH_MAP[n.id];
+  return matchProducts(n, productList);
+};
+const prods = () => state.selectedPids.map(id => productList.find(p => p.id === id)).filter(Boolean);
+const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** 上报一条运行事件(供后台数据看板统计);无服务端时静默跳过 */
+function logEvent(type, payload) {
+  try {
+    fetch('/api/events', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, at: new Date().toISOString(), ...payload }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch (e) { /* file:// 打开时忽略 */ }
+}
+
+function toast(msg, success = false) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (success ? ' success' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function go(step) {
+  if (step >= 2 && !state.newsId) { toast('请先在 Step 1 选择一条爆款热点'); return; }
+  if (step >= 4 && state.selectedPids.length === 0) { toast('请先在 Step 2/3 选定至少一件匹配商品'); return; }
+  if (step >= 5 && !(state.versions && state.versions[state.activeVersion] && state.versions[state.activeVersion].text.trim())) {
+    toast('请先在 Step 4 生成微博文案'); return;
+  }
+  state.step = step;
+  render();
+}
+
+/* =================================================================
+ * 渲染:左侧步骤导航 + 上下文条
+ * ================================================================= */
+const STEPS = [
+  { n: 1, label: '新闻抓取',     hint: () => state.newsId ? '已选:' + news().title : '监控热点新闻' },
+  { n: 2, label: '建议匹配商品', hint: () => state.newsId && state.selectedPids.length ? `已采纳 ${state.selectedPids.length} 件` : '系统智能推荐' },
+  { n: 3, label: '匹配商品',     hint: () => state.selectedPids.length ? `已绑定 ${state.selectedPids.length} 件商品` : '商品库深度筛选' },
+  { n: 4, label: '创作文案',     hint: () => state.generating ? '正在生成…' : (state.versions ? `已生成 ${state.versions.filter(v => v.status === 'done').length} 个版本` : 'LLM 微博文案生成') },
+  { n: 5, label: '审核并发送',   hint: () => state.sent ? '已发布' : (state.reviewed ? '审核已通过' : '合规审核 · 模拟发布') },
+];
+function stepDone(n) {
+  if (n === 1) return !!state.newsId;
+  if (n === 2 || n === 3) return state.selectedPids.length > 0;
+  if (n === 4) return !!state.versions;
+  if (n === 5) return state.sent;
+  return false;
+}
+function renderNav() {
+  /* 自动模式下侧栏改为展示流水线阶段 */
+  if (state.mode === 'auto') {
+    $('#stepNav').innerHTML = AUTO_STAGES.map((s, i) => `
+      ${i > 0 ? '<div class="step-connector"></div>' : ''}
+      <div class="step-item ${state.autoStage === i ? 'active' : ''} ${state.autoStage > i ? 'done' : ''}">
+        <span class="step-num">${state.autoStage > i ? '✓' : i + 1}</span>
+        <span class="step-text"><div class="step-label">${s}</div></span>
+      </div>`).join('')
+      + `<div style="margin-top:14px;padding:10px 11px;background:var(--orange-bg);border:1px solid #fcd9bd;border-radius:10px;font-size:11.5px;color:#9a3412;line-height:1.65">
+          自动模式运行中,风险热点与合规不过的文案会自动转人工。
+        </div>`;
+    return;
+  }
+  $('#stepNav').innerHTML = STEPS.map((s, i) => {
+    const done = stepDone(s.n) && state.step !== s.n;
+    const active = state.step === s.n;
+    const filled = stepDone(s.n);
+    return `${i > 0 ? '<div class="step-connector"></div>' : ''}
+      <button class="step-item ${active ? 'active' : ''} ${done ? 'done' : ''}" onclick="go(${s.n})">
+        <span class="step-num">${done ? '✓' : s.n}</span>
+        <span class="step-text">
+          <div class="step-label">Step ${s.n} · ${s.label}</div>
+          <div class="step-hint ${filled ? 'filled' : ''}">${s.hint()}</div>
+        </span>
+      </button>`;
+  }).join('');
+}
+function renderContext() {
+  const parts = [];
+  if (state.newsId) parts.push(`<span class="ctx-tag hot">${news().title}</span>`);
+  if (state.selectedPids.length) parts.push(`<span class="ctx-arrow">→</span><span class="ctx-tag">${state.selectedPids.length} 件商品:${prods().map(p => p.name.split(' ·')[0]).join('、')}</span>`);
+  if (state.versions) parts.push(`<span class="ctx-arrow">→</span><span class="ctx-tag">文案 × 3 版本</span>`);
+  if (state.sent) parts.push(`<span class="ctx-arrow">→</span><span class="ctx-tag" style="background:var(--green-bg);border-color:#bbf0cd;color:var(--green)">已发布</span>`);
+  $('#contextBar').innerHTML = parts.length
+    ? `<span style="font-weight:600;color:var(--ink-3);flex-shrink:0">当前链路</span>` + parts.join('')
+    : `<span>尚未选择热点 —— 从 <b style="color:var(--ink-2)">Step 1 新闻抓取</b> 开始你的爆款之旅</span>`;
+}
+
+/* =================================================================
+ * Step 1 新闻抓取
+ * ================================================================= */
+const TAG_BADGE = { hot: '<span class="badge badge-hot">爆</span>', rise: '<span class="badge badge-rise">升</span>', new: '<span class="badge badge-new">新</span>' };
+function viewStep1() {
+  return `
+  <div class="page-head">
+    <div>
+      <div class="page-title">Step 1 · 新闻抓取</div>
+      <div class="page-desc">实时监控全网热点新闻,点击卡片将其选为本次营销的"爆款热点"</div>
+    </div>
+  </div>
+  <div class="card crawl-panel">
+    <span class="pulse-dot" ${state.liveNews ? '' : 'style="background:var(--ink-3);animation:none"'}></span>
+    <div class="crawl-meta">
+      ${state.liveNews
+        ? `<b style="color:var(--green)">实时抓取</b> · ${srcStatusText()} &nbsp;|&nbsp; 上次抓取 <b>${state.lastCrawl}</b> &nbsp;|&nbsp; 入库 <b>${newsList.length}</b> 条${riskNoteText()}`
+        : `<b>演示数据</b>(内置 Mock)&nbsp;|&nbsp; 上次抓取 <b>${state.lastCrawl}</b> &nbsp;|&nbsp; 入库 <b>${newsList.length}</b> 条 —— 点击右侧按钮抓取真实热榜`}
+      ${state.crawlError ? `<span style="color:var(--red)"> · ${esc(state.crawlError)}</span>` : ''}
+    </div>
+    <button class="btn btn-ghost btn-sm" id="crawlBtn" ${state.crawling ? 'disabled' : ''} onclick="doCrawl()">
+      ${state.crawling ? '抓取中…' : '立即抓取'}
+    </button>
+  </div>
+  <div class="news-grid">
+    ${newsList.map(n => {
+      const blocked = n.risk && n.risk.level === 'block';
+      return `
+      <div class="news-card ${state.newsId === n.id ? 'selected' : ''} ${blocked ? 'blocked' : ''}" onclick="pickNews('${n.id}')">
+        <div class="news-top">
+          ${TAG_BADGE[n.tag]}
+          ${n.live ? '<span class="badge badge-live">实时</span>' : ''}
+          ${n.published ? `<span class="badge badge-dup" title="与已发布的「${esc(n.published.matched)}」相似度 ${n.published.score}">🔁 ${n.published.hoursAgo != null ? n.published.hoursAgo + 'h 前发过' : '已发过'}</span>` : ''}
+          ${n.dupOf ? `<span class="badge badge-gray" title="与「${esc(n.dupTitle)}」相似度 ${n.dupScore}">同源重复</span>` : ''}
+          ${(() => { const srcs = (n.sources && n.sources.length > 1) ? n.sources : (n.dupSources && n.dupSources.length > 1 ? n.dupSources : null);
+            return (!n.dupOf && srcs) ? `<span class="badge badge-gray" title="${esc(srcs.join('、'))}">${srcs.length} 源在报</span>` : ''; })()}
+          <span class="news-source">${esc(n.source)} · ${esc(n.time)}</span>
+        </div>
+        <div class="news-title">${esc(n.title)}</div>
+        <div class="news-summary">${esc(n.summary)}</div>
+        ${n.risk ? `<div class="risk-note ${n.risk.level}">${blocked ? '禁止借势' : '需人工判断'} · ${esc(n.risk.reason)}${n.risk.words.length ? ` · 命中「${esc(n.risk.words.join('、'))}」` : ''}</div>` : ''}
+        <div class="news-foot">
+          <div class="heat">热度 <span class="heat-bar"><i style="width:${n.heat}%"></i></span> <span class="heat-val">${n.heat}</span></div>
+          <span style="font-size:11.5px;color:var(--brand)">${esc(n.topics.join(' '))}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="next-bar">
+    <span class="hint">${state.newsId ? '已选择热点,进入下一步查看系统推荐商品' : '选择一条热点新闻后可进入下一步'}</span>
+    <button class="btn btn-primary" ${state.newsId ? '' : 'disabled'} onclick="go(2)">下一步:建议匹配商品 →</button>
+  </div>`;
+}
+/**
+ * 给当前新闻列表打去重标记:
+ *   n.dupOf / n.dupTitle / n.dupScore  —— 同一批里被别的源抢先报过
+ *   n.published                        —— 与近期已发布内容重复
+ */
+async function markDuplicates() {
+  const cfg = state.autoCfg;
+  clusterNews(newsList, cfg.dupThreshold);
+  if (!PublishIndex.loaded) await PublishIndex.load();
+  newsList.forEach(n => {
+    const r = PublishIndex.check(n.title, { windowHours: cfg.dupWindow, threshold: cfg.dupThreshold });
+    n.published = r.duplicate ? r : null;
+  });
+  const dup = newsList.filter(n => n.dupOf).length;
+  const pub = newsList.filter(n => n.published).length;
+  if (dup || pub) log0(`去重:同批次跨源重复 ${dup} 条,与近 ${cfg.dupWindow}h 已发布重复 ${pub} 条`);
+}
+/** 仅在自动模式运行时写日志,手工模式静默 */
+function log0(msg) { if (state.autoRunning) log(msg); }
+
+/* 抓取源状态摘要 */
+function srcStatusText() {
+  if (!state.crawlSources) return '';
+  return state.crawlSources.map(s =>
+    `${esc(s.name)} ${s.ok ? `<b style="color:var(--green)">✓${s.count}</b>` : `<b style="color:var(--red)" title="${esc(s.error || '')}">✗</b>`}`
+  ).join(' · ');
+}
+function riskNoteText() {
+  const n = newsList.filter(x => x.risk && x.risk.level === 'block').length;
+  return n ? ` &nbsp;|&nbsp; <b style="color:var(--red)">${n} 条已标记禁止借势</b>` : '';
+}
+
+/** 真实抓取:调用服务端 /api/news,失败则保留当前列表 */
+async function doCrawl() {
+  state.crawling = true; state.crawlError = null; render();
+  try {
+    const res = await fetch('/api/news?force=1', { cache: 'no-store' });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      throw new Error((j.error && j.error.message) || ('HTTP ' + res.status));
+    }
+    const data = await res.json();
+    if (!data.items || !data.items.length) throw new Error('所有抓取源都没有返回数据');
+    newsList = data.items;
+    await markDuplicates();      // 同批次跨源聚类 + 与历史发布比对
+    state.liveNews = true;
+    state.crawlSources = data.sources;
+    state.lastCrawl = new Date(data.at).toLocaleTimeString('zh-CN', { hour12: false });
+    /* 抓取后原来选中的热点可能已不存在,重置下游链路 */
+    if (state.newsId && !newsList.some(n => n.id === state.newsId)) {
+      Object.assign(state, { newsId: null, selectedPids: [], versions: null, reviewed: false, sent: false, llmMeta: null });
+    }
+    const ok = data.sources.filter(s => s.ok).length;
+    logEvent('crawl', {
+      sources: data.sources.map(s => ({ name: s.name, ok: s.ok, count: s.count, ms: s.ms })),
+      total: data.items.length, riskCount: data.riskCount || 0,
+      topTitles: data.items.slice(0, 5).map(i => i.title),
+    });
+    toast(`抓取完成:${ok}/${data.sources.length} 个源,共 ${data.items.length} 条${data.riskCount ? `,${data.riskCount} 条已风险拦截` : ''}`, true);
+  } catch (e) {
+    /* 无服务端(file:// 打开)或抓取失败 → 退回 Mock 的热度扰动演示 */
+    state.crawlError = e.message.includes('Failed to fetch') || e.message.includes('NetworkError')
+      ? '未连接本地服务,使用演示数据(运行 node server.js 可抓真实热榜)'
+      : e.message;
+    newsList.forEach(n => n.heat = Math.min(99, Math.max(50, n.heat + Math.round(Math.random() * 8 - 3))));
+    newsList.sort((a, b) => b.heat - a.heat);
+    state.lastCrawl = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    toast('实时抓取不可用,已刷新演示数据');
+  } finally {
+    state.crawling = false;
+    render();
+  }
+}
+
+function pickNews(id) {
+  const target = newsList.find(n => n.id === id);
+  if (target && target.risk && target.risk.level === 'block') {
+    toast('该热点' + target.risk.reason + ',已阻止选用');
+    return;
+  }
+  if (target && target.published) {
+    /* 手工模式只提醒不拦截 —— 运营可能是有意二次借势 */
+    toast(`⚠️ 该热点 ${target.published.hoursAgo}h 前发过类似内容:「${target.published.matched.slice(0, 18)}」`);
+  } else if (target && target.dupOf) {
+    toast(`该热点与「${target.dupTitle.slice(0, 16)}」是同一件事(相似度 ${target.dupScore})`);
+  }
+  if (state.newsId !== id) {
+    state.newsId = id;
+    // 热点切换 → 重置下游链路,保证上下文一致
+    state.selectedPids = [];
+    state.versions = null; state.activeVersion = 0;
+    state.reviewed = false; state.sent = false;
+    toast('已选为爆款热点:' + news().title);
+  }
+  render();
+}
+
+/* =================================================================
+ * Step 2 建议匹配商品
+ * ================================================================= */
+function prodCard(p, { score, reason } = {}, clickFn) {
+  const sel = state.selectedPids.includes(p.id);
+  return `
+  <div class="prod-card ${sel ? 'selected' : ''}" ${clickFn ? `onclick="${clickFn}('${p.id}')" style="cursor:pointer"` : ''}>
+    <div class="prod-img" style="background:${p.bg}">
+      ${score ? `<span class="match-pill">匹配度 <b>${score}%</b></span>` : ''}
+      <span>${p.emoji}</span>
+      <span class="select-check">✓</span>
+    </div>
+    <div class="prod-body">
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-points">${p.points.map(x => `<span>${x}</span>`).join('')}</div>
+      ${reason ? `<div class="prod-reason">${reason}</div>` : ''}
+      <div class="prod-foot">
+        <span class="prod-price"><small>¥</small>${p.price}<span class="orig">¥${p.orig}</span></span>
+        <span class="badge badge-gray">${p.cat}</span>
+      </div>
+    </div>
+  </div>`;
+}
+function viewStep2() {
+  const matches = matchesFor(news());
+  return `
+  <div class="page-head">
+    <div>
+      <div class="page-title">Step 2 · 建议匹配商品</div>
+      <div class="page-desc">系统基于热点语义与商品卖点自动推荐,点击卡片采纳/取消(可多选)</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="adoptAll()">一键采纳全部</button>
+  </div>
+  <div class="prod-grid">
+    ${matches.length
+      ? matches.map(m => ({ m, p: productList.find(p => p.id === m.pid) }))
+               .filter(x => x.p)                       /* 商品可能已在后台被删除 */
+               .map(x => prodCard(x.p, x.m, 'togglePid')).join('')
+      : `<div class="empty-state" style="grid-column:1/-1"><div>
+          <div class="icon">—</div>
+          <div class="t">这条热点没有匹配到合适的商品</div>
+          <div class="d">匹配算法没有在该热点中识别到可借势的消费场景(时政、财经类热点通常如此)。<br>可以换一条热点,或到 <b>Step 3</b> 从商品库手动挑选。</div>
+        </div></div>`}
+  </div>
+  <div class="next-bar">
+    <span class="hint">已采纳 <b style="color:var(--brand)">${state.selectedPids.length}</b> 件 · 可到 Step 3 从完整商品库补充</span>
+    <button class="btn btn-ghost" onclick="go(3)">去商品库深度筛选</button>
+    <button class="btn btn-primary" ${state.selectedPids.length ? '' : 'disabled'} onclick="go(4)">下一步:创作文案 →</button>
+  </div>`;
+}
+function togglePid(id) {
+  const i = state.selectedPids.indexOf(id);
+  if (i >= 0) state.selectedPids.splice(i, 1);
+  else state.selectedPids.push(id);
+  // 商品变化 → 文案与审核状态失效
+  state.versions = null; state.reviewed = false; state.sent = false;
+  render();
+}
+function adoptAll() {
+  matchesFor(news()).forEach(m => {
+    if (!state.selectedPids.includes(m.pid) && productList.some(p => p.id === m.pid)) state.selectedPids.push(m.pid);
+  });
+  state.versions = null; state.reviewed = false; state.sent = false;
+  toast('已采纳全部推荐商品', true);
+  render();
+}
+
+/* =================================================================
+ * Step 3 匹配商品(商品库)
+ * ================================================================= */
+function viewStep3() {
+  const cats = ['全部', ...new Set(productList.map(p => p.cat))];
+  const list = productList.filter(p =>
+    (state.catFilter === '全部' || p.cat === state.catFilter) &&
+    (!state.search || p.name.includes(state.search) || p.points.join('').includes(state.search)));
+  return `
+  <div class="page-head">
+    <div>
+      <div class="page-title">Step 3 · 匹配商品</div>
+      <div class="page-desc">在完整商品库中手动筛选并绑定商品,与 Step 2 的采纳结果实时同步</div>
+    </div>
+    <span class="badge badge-green" style="font-size:12px;padding:5px 12px">已绑定 ${state.selectedPids.length} 件</span>
+  </div>
+  <div class="toolbar">
+    <div class="search-box"><input placeholder="搜索商品名称 / 卖点…" value="${state.search}" oninput="onSearch(this.value)"></div>
+    ${cats.map(c => `<button class="filter-chip ${state.catFilter === c ? 'on' : ''}" onclick="setCat('${c}')">${c}</button>`).join('')}
+  </div>
+  <div class="prod-grid">
+    ${list.map(p => prodCard(p, {}, 'togglePid')).join('') || '<div class="empty-state" style="grid-column:1/-1"><div><div class="icon">—</div><div class="t">没有匹配的商品</div></div></div>'}
+  </div>
+  <div class="next-bar">
+    <span class="hint">选定商品:${prods().map(p => p.name.split(' ·')[0]).join('、') || '暂无'}</span>
+    <button class="btn btn-primary" ${state.selectedPids.length ? '' : 'disabled'} onclick="go(4)">下一步:创作文案 →</button>
+  </div>`;
+}
+function onSearch(v) { state.search = v; renderMainOnly(); }
+function setCat(c) { state.catFilter = c; render(); }
+
+/* =================================================================
+ * Step 4 创作文案 —— Mock LLM(预留真实 API 接入点)
+ * ================================================================= */
+const tones = () => PromptStore.data.tones;
+const styles = () => PromptStore.data.styles;
+const V_ICON = { pending: '○', streaming: '⋯', done: '', error: '!' };
+
+/** 本地 Mock 文案(mode=mock 时使用,离线兜底演示) */
+function mockLLMGenerate(n, ps, tone) {
+  const topic = n.topics[0];
+  const topic2 = n.topics[1] || '';
+  const p1 = ps[0];
+  const names = ps.map(p => p.name.split(' ·')[0]);
+  const priceLine = ps.map(p => `${p.name.split(' ·')[0]} 直降到手 ¥${p.price}`).join(',');
+  const pointLine = p1.points.slice(0, 2).join('+');
+
+  /* 注意:以下 emoji 属于「生成出来的微博营销内容」,不是界面装饰 —— 微博文案本就需要 emoji,请勿删除 */
+  const vA = `${topic} 冲上热搜!${n.title.slice(0, 18)}…这波热度谁还没跟上?🔥\n\n实测好物安利👉 ${names.join(' × ')},${pointLine},谁用谁知道!✨\n\n${priceLine}💰 手慢无!\n\n点击主页橱窗直达👆 评论区蹲一个真实反馈~ ${topic2} #好物推荐#`;
+
+  const vB = `⏰ 限时 48 小时!${topic} 应援专场开抢!\n\n${ps.map(p => `🛒 ${p.name.split(' ·')[0]}:原价¥${p.orig},现价¥${p.price},${p.points[0]}`).join('\n')}\n\n💥 叠加店铺券再减 10 元,今晚 8 点准时开抢!\n\n转发+关注,抽 3 位小伙伴免单!🎁 ${topic} #限时秒杀#`;
+
+  const vC = `姐妹们!${n.title.slice(0, 15)}…你们那边也这样吗?😭\n\n评论区聊聊:${tone === '互动话题' ? '你的应对妙招是什么?' : '最近你最上头的是哪一款?'}\n\n我先来:全靠 ${names[0]} 续命!${pointLine},真的绝了👍\n\n🎁 今晚抽 5 位评论区宝子送同款!转发让更多人看到~ ${topic} ${topic2}`;
+
+  const texts = [vA, vB, vC];
+  return styles().map((s, i) => ({ name: s.name, text: texts[i % 3], status: 'done' }));
+}
+function viewStep4() {
+  const n = news(), ps = prods();
+  let outputHtml;
+  if (state.generating && LlmStore.cfg.mode === 'mock') {
+    outputHtml = `<div class="gen-loading">
+      <div><div class="spinner"></div>
+      <div class="t">正在创作微博文案…</div>
+      <div class="d">正在融合热点语境与商品卖点,生成多版本方案</div></div>
+    </div>`;
+  } else if (state.llmError && !state.versions) {
+    outputHtml = `<div class="output-body">
+      <div class="err-box">
+        <b>文案生成失败</b><br>${esc(state.llmError)}
+        <div style="margin-top:8px">常见原因:API Key 无效或账户余额不足 · 模型名 / Base URL 填写错误 · 浏览器直连被 CORS 拦截(改用「服务端代理」模式)。</div>
+      </div>
+      <div class="output-actions">
+        <button class="btn btn-primary btn-sm" onclick="generate(true)">↻ 重试</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSettings()">模型设置</button>
+        <button class="btn btn-ghost btn-sm" onclick="useMockNow()">改用本地 Mock 生成</button>
+      </div></div>`;
+  } else if (state.versions) {
+    const v = state.versions[state.activeVersion];
+    outputHtml = `
+      <div class="version-tabs">
+        ${state.versions.map((x, i) => `<button class="version-tab ${i === state.activeVersion ? 'on' : ''} ${x.status === 'error' ? 'err' : ''}" onclick="switchVersion(${i})"><span class="v-ic">${V_ICON[x.status] || ''}</span>${esc(x.name)}</button>`).join('')}
+      </div>
+      <div class="output-body">
+        <div class="copy-text" id="copyText">${esc(v.text) || (v.status === 'error' ? '生成失败:' + esc(v.err || '') : '正在等待模型返回…')}${v.status === 'streaming' ? '<span class="stream-cursor"></span>' : ''}</div>
+        <div class="output-actions">
+          ${state.generating
+            ? `<button class="btn btn-ghost btn-sm" onclick="stopGen()">■ 停止生成</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="copyText()">一键复制</button>
+               <button class="btn btn-ghost btn-sm" onclick="generate(true)">↻ 重新生成</button>
+               <button class="btn btn-green btn-sm" ${v.status === 'done' ? '' : 'disabled'} onclick="go(5)">采用此版本,去审核 →</button>`}
+          <span class="char-count">${metaLine()}</span>
+        </div>
+        ${(!state.generating && v.status === 'done') ? complianceBar(v, state.activeVersion) : ''}
+      </div>`;
+  } else {
+    outputHtml = `<div class="empty-state"><div>
+      <div class="icon">—</div>
+      <div class="t">待生成</div>
+      <div class="d">左侧确认"热点 + 商品"组合与文案语调,点击"生成文案"即可产出 ${styles().length} 个版本的微博营销文案</div>
+    </div></div>`;
+  }
+  return `
+  <div class="page-head">
+    <div>
+      <div class="page-title">Step 4 · 创作文案</div>
+      <div class="page-desc">基于"热点 + 商品"组合,由 LLM 生成微博风格营销文案(多版本可微调)</div>
+    </div>
+  </div>
+  <div class="gen-layout">
+    <div class="card ingredient">
+      <h4>创作素材 INGREDIENTS</h4>
+      <div class="ing-news">${n.title}<div style="font-weight:400;font-size:11.5px;color:var(--orange);margin-top:2px">${n.topics.join(' ')}</div></div>
+      ${ps.map(p => `<div class="ing-prod">
+        <span class="thumb" style="background:${p.bg}">${p.emoji}</span>
+        <span style="min-width:0"><div class="n">${p.name}</div><div class="p">¥${p.price} <span style="color:var(--ink-3);font-weight:400">· ${p.points[0]}</span></div></span>
+      </div>`).join('')}
+      <h4 style="margin-top:16px">主打语调 TONE</h4>
+      <div class="tone-row">
+        ${tones().map(t => `<button class="filter-chip ${state.tone === t ? 'on' : ''}" onclick="setTone('${esc(t)}')">${esc(t)}</button>`).join('')}
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%" ${state.generating ? 'disabled' : ''} onclick="generate()">
+        ${state.generating ? '生成中…' : (state.versions ? '重新生成文案' : '生成文案')}
+      </button>
+      <div class="llm-note" style="margin-top:14px">
+        当前模型:<b style="color:var(--ink-2)">${esc(LlmStore.label())}</b>
+        <a href="javascript:openSettings()" style="color:var(--brand)">切换</a><br>
+        提示词模板可在 <a href="admin.html" style="color:var(--brand)">后台管理</a> 查看与修改,共 ${styles().length} 个版本风格并发生成。
+      </div>
+    </div>
+    <div class="card output-panel">${outputHtml}</div>
+  </div>`;
+}
+function setTone(t) { state.tone = t; render(); }
+
+/** 语调 → 默认选中的版本下标 */
+function defaultVersionIdx() {
+  const i = tones().indexOf(state.tone);
+  return i >= 0 && i < styles().length ? i : 0;
+}
+
+/** 生成文案:mock 走本地模板,proxy/direct 调真实大模型(多版本并发 + 流式输出) */
+async function generate(isRegen) {
+  if (state.generating) return;
+  state.llmError = null;
+  state.reviewed = false; state.sent = false;
+
+  /* --- 本地 Mock --- */
+  if (LlmStore.cfg.mode === 'mock') {
+    state.generating = true; state.versions = null; render();
+    setTimeout(() => {
+      state.versions = mockLLMGenerate(news(), prods(), state.tone);
+      state.activeVersion = defaultVersionIdx();
+      state.llmMeta = { model: '本地模板', mode: 'mock' };
+      state.generating = false;
+      /* Mock 生成同样计入看板,否则「生成→发布」漏斗会缺一环 */
+      logEvent('generate', {
+        mode: 'mock', model: '本地模板', tone: state.tone,
+        newsTitle: news().title, newsSource: news().source, live: !!news().live,
+        productIds: prods().map(p => p.id), productNames: prods().map(p => p.name),
+        versions: state.versions.length, ok: state.versions.length,
+        ms: 1500, promptTokens: 0, completionTokens: 0,
+        chars: state.versions.map(v => v.text.length),
+      });
+      toast(isRegen ? '已重新生成(本地 Mock)' : `文案生成完成,共 ${state.versions.length} 个版本`, true);
+      render();
+    }, 1500);
+    return;
+  }
+
+  /* --- 真实大模型 --- */
+  if (LlmStore.cfg.mode === 'direct' && !LlmStore.cfg.apiKey) {
+    toast('请先在「模型设置」中填写 API Key'); openSettings(); return;
+  }
+  const n = news(), ps = prods(), tone = state.tone, list = styles();
+  state.generating = true;
+  state.abort = new AbortController();
+  state.versions = list.map(s => ({ name: s.name, text: '', status: 'pending', err: null }));
+  state.activeVersion = defaultVersionIdx();
+  state.llmMeta = { model: LlmStore.cfg.model, mode: LlmStore.cfg.mode, ms: 0, prompt_tokens: 0, completion_tokens: 0 };
+  const t0 = performance.now();
+  render();
+
+  await Promise.all(list.map(async (style, i) => {
+    const v = state.versions[i];
+    v.status = 'streaming'; paintStream();
+    try {
+      const messages = PromptStore.buildMessages({ news: n, products: ps, tone, style });
+      const r = await llmChat(messages, {
+        stream: LlmStore.cfg.stream,
+        signal: state.abort.signal,
+        onDelta: (text) => { v.text = text; paintStream(); },
+      });
+      v.text = r.text || v.text;
+      v.status = v.text ? 'done' : 'error';
+      if (!v.text) v.err = '模型返回内容为空';
+      if (r.usage) {
+        state.llmMeta.prompt_tokens += r.usage.prompt_tokens || 0;
+        state.llmMeta.completion_tokens += r.usage.completion_tokens || 0;
+      }
+    } catch (e) {
+      v.status = e.name === 'AbortError' && v.text ? 'done' : 'error';
+      v.err = e.name === 'AbortError' ? '已手动停止' : e.message;
+    }
+    paintStream();
+  }));
+
+  state.llmMeta.ms = Math.round(performance.now() - t0);
+  state.generating = false;
+  state.abort = null;
+  const ok = state.versions.filter(v => v.status === 'done');
+  if (!ok.length) {
+    state.llmError = (state.versions.find(v => v.err) || {}).err || '生成失败';
+    state.versions = null;
+    render();
+    toast('生成失败:' + state.llmError);
+    return;
+  }
+  if (state.versions[state.activeVersion].status !== 'done') state.activeVersion = state.versions.indexOf(ok[0]);
+  render();
+  logEvent('generate', {
+    mode: LlmStore.cfg.mode, model: LlmStore.cfg.model, tone: state.tone,
+    newsTitle: n.title, newsSource: n.source, live: !!n.live,
+    productIds: ps.map(p => p.id), productNames: ps.map(p => p.name),
+    versions: state.versions.length, ok: ok.length,
+    ms: state.llmMeta.ms, promptTokens: state.llmMeta.prompt_tokens, completionTokens: state.llmMeta.completion_tokens,
+    chars: ok.map(v => v.text.length),
+  });
+  toast(`已生成 ${ok.length}/${state.versions.length} 个版本 · ${LlmStore.cfg.model}`, true);
+}
+
+/* ---------- 发布前合规校验 + 一键修正(与自动模式共用 eval.js 的规则与修正引擎)---------- */
+function currentKase() {
+  return { news: news(), products: prods(), tone: state.tone };
+}
+/** 输出面板底部的合规状态条 */
+function complianceBar(v, idx) {
+  if (typeof runRules !== 'function') return '';
+  const r = runRules(v.text, currentKase());
+  const failed = r.items.filter(x => !x.pass);
+  const hard = failed.filter(x => x.key === 'banned' || x.key === 'price');
+  const cls = !failed.length ? 'pass' : (hard.length ? 'fail' : 'warn');
+  const title = !failed.length ? `合规校验全部通过 · 规则分 ${r.score}`
+    : hard.length ? `发布前校验未通过 · 规则分 ${r.score}`
+    : `有 ${failed.length} 项待优化 · 规则分 ${r.score}`;
+  return `
+    <div class="compliance ${cls}">
+      <span class="cs">${!failed.length ? '✓' : '!'}</span>
+      <span class="cb">
+        <div>${title}</div>
+        ${failed.length ? `<div class="fixes">${failed.map(x => `${esc(x.label)}:${esc(x.detail)}`).join(' · ')}</div>` : ''}
+      </span>
+      ${failed.length && LlmStore.cfg.mode !== 'mock'
+        ? `<button class="btn btn-ghost btn-sm" ${state.repairing ? 'disabled' : ''} onclick="repairVersion(${idx})">${state.repairing ? '修正中…' : '一键修正'}</button>`
+        : ''}
+    </div>
+    ${v.repairLog ? `<div class="repair-log">${esc(v.repairLog)}</div>` : ''}`;
+}
+
+/** 让模型按失败项自己改一版 */
+async function repairVersion(idx) {
+  if (state.repairing) return;
+  if (LlmStore.cfg.mode === 'mock') { toast('本地 Mock 模式不支持修正,请先切换真实模型'); return; }
+  const v = state.versions[idx];
+  state.repairing = true; render();
+  try {
+    const res = await repairCopy(v.text, currentKase(), { maxRounds: 2 });
+    if (res.changed) {
+      const fixed = res.history.flatMap(h => h.fixed || []);
+      v.text = res.text;
+      v.repairLog = `已修正 ${res.rounds} 轮,规则分 ${res.rules.score}` +
+        (fixed.length ? `,修复了:${fixed.join('、')}` : '') +
+        (res.rules.items.some(x => !x.pass) ? `;仍有未通过项,建议人工调整` : '');
+      toast(`修正完成 · 规则分 ${res.rules.score}`, true);
+    } else {
+      const err = (res.history.find(h => h.error) || {}).error;
+      v.repairLog = err ? `修正未生效:${err}` : '模型没有产出更好的版本,已保留原文';
+      toast(v.repairLog);
+    }
+  } catch (e) {
+    toast('修正失败:' + e.message);
+  } finally {
+    state.repairing = false; render();
+  }
+}
+
+function stopGen() { if (state.abort) { state.abort.abort(); toast('已停止生成'); } }
+function useMockNow() { LlmStore.save({ mode: 'mock' }); renderModeBadge(); generate(true); }
+
+/** 流式增量刷新:只改动文本与页签状态,避免整页重渲染打断输入 */
+function paintStream() {
+  if (state.step !== 4 || !state.versions) return;
+  const v = state.versions[state.activeVersion];
+  const box = document.getElementById('copyText');
+  if (box) {
+    box.innerHTML = (esc(v.text) || (v.status === 'error' ? '生成失败:' + esc(v.err || '') : '正在等待模型返回…'))
+      + (v.status === 'streaming' ? '<span class="stream-cursor"></span>' : '');
+  }
+  document.querySelectorAll('.version-tab').forEach((el, i) => {
+    const s = state.versions[i]; if (!s) return;
+    el.className = 'version-tab' + (i === state.activeVersion ? ' on' : '') + (s.status === 'error' ? ' err' : '');
+    const ic = el.querySelector('.v-ic');
+    if (ic) ic.textContent = V_ICON[s.status] || '';
+  });
+  const cc = document.querySelector('.char-count');
+  if (cc) cc.textContent = metaLine();
+  const hint = document.querySelector('.step-item.active .step-hint');
+  if (hint) hint.textContent = STEPS[3].hint();
+}
+
+/** 输出面板底部的模型/耗时/token 信息 */
+function metaLine() {
+  const v = state.versions ? state.versions[state.activeVersion] : null;
+  const m = state.llmMeta;
+  const bits = [];
+  if (v) bits.push(`共 ${v.text.length} 字`);
+  if (m) {
+    bits.push(m.model);
+    bits.push(MODE_LABEL[m.mode] || m.mode);
+    if (m.ms) bits.push((m.ms / 1000).toFixed(1) + 's');
+    if (m.completion_tokens) bits.push(`↑${m.prompt_tokens} ↓${m.completion_tokens} tokens`);
+  }
+  return bits.join(' · ');
+}
+
+function switchVersion(i) { state.activeVersion = i; render(); }
+function copyText() {
+  const text = state.versions[state.activeVersion].text;
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+    .then(() => toast('文案已复制到剪贴板', true))
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+      toast('文案已复制到剪贴板', true);
+    });
+}
+
+/* =================================================================
+ * Step 5 审核并发送
+ * ================================================================= */
+function highlightWeibo(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/#([^#\n]{1,30})#/g, '<span class="hl">#$1#</span>');
+}
+function viewStep5() {
+  const v = state.versions[state.activeVersion];
+  const ps = prods();
+  const statusBadge = state.sent
+    ? '<span class="badge badge-green" style="font-size:12px;padding:5px 12px">已发布</span>'
+    : state.reviewed
+      ? '<span class="badge badge-green" style="font-size:12px;padding:5px 12px">审核已通过</span>'
+      : '<span class="badge badge-rise" style="font-size:12px;padding:5px 12px">⏳ 未审核</span>';
+  return `
+  <div class="page-head">
+    <div>
+      <div class="page-title">Step 5 · 审核并发送</div>
+      <div class="page-desc">最终微博效果预览 → 合规审核 → 一键发送(模拟)</div>
+    </div>
+    ${statusBadge}
+  </div>
+  <div class="review-layout">
+    <div class="card weibo-card">
+      <div class="weibo-head">
+        <div class="weibo-avatar"></div>
+        <div>
+          <div class="weibo-name">好物研究所Lab <span style="font-size:10px;background:#ffe27a;color:#8a6d00;border-radius:4px;padding:1px 5px;vertical-align:1px">V</span></div>
+          <div class="weibo-time">${state.sent ? '刚刚 · 来自 热点营销工作台' : '预览 · 尚未发布'}</div>
+        </div>
+      </div>
+      <div class="weibo-body">${highlightWeibo(v.text)}</div>
+      <div class="weibo-imgs">
+        ${ps.slice(0, 3).map(p => `<div class="im" style="background:${p.bg}">${p.emoji}</div>`).join('')}
+      </div>
+      <div class="weibo-foot"><span> 转发 ${state.sent ? '1.2万' : '—'}</span><span> 评论 ${state.sent ? '3,846' : '—'}</span><span> 赞 ${state.sent ? '5.7万' : '—'}</span></div>
+    </div>
+    <div class="card review-panel">
+      <h4 style="font-size:14px;margin-bottom:4px">发布信息</h4>
+      <div class="review-row"><span class="k">关联热点</span><span class="v">${news().title}</span></div>
+      <div class="review-row"><span class="k">关联商品</span><span class="v">${ps.map(p => p.name.split(' ·')[0]).join('、')}</span></div>
+      <div class="review-row"><span class="k">采用版本</span><span class="v">${v.name}</span></div>
+      <div class="review-row"><span class="k">发布账号</span><span class="v">@好物研究所Lab</span></div>
+      <div class="checklist">
+        <h4 style="font-size:13px;margin:10px 0 6px">合规自检</h4>
+        <div class="check-item"><span class="ok">✓</span> 无绝对化用语(最/第一/国家级)</div>
+        <div class="check-item"><span class="ok">✓</span> 价格信息与商品库一致</div>
+        <div class="check-item"><span class="ok">✓</span> 含话题标签与互动引导</div>
+        <div class="check-item"><span class="ok">✓</span> 字数 ${v.text.length} / 2000,符合微博限制</div>
+      </div>
+      <div class="send-area">
+        ${state.sent
+          ? `<button class="btn btn-ghost" onclick="resetFlow()">开始新的热点任务</button>`
+          : state.reviewed
+            ? `<button class="btn btn-primary btn-lg" onclick="sendWeibo()">一键发送</button>
+               <button class="btn btn-ghost" onclick="go(4)">← 返回修改文案</button>`
+            : `<button class="btn btn-green btn-lg" onclick="approve()">通过审核</button>
+               <button class="btn btn-ghost" onclick="go(4)">← 返回修改文案</button>`}
+      </div>
+      ${state.sent ? '<div style="margin-top:12px;font-size:12.5px;color:var(--green)">模拟发布成功!数据为演示效果,接入真实微博开放平台 API 后即可实际发布。</div>' : ''}
+    </div>
+  </div>`;
+}
+function approve() { state.reviewed = true; toast('审核已通过,可以发送', true); render(); }
+function sendWeibo() {
+  state.sent = true;
+  const v = state.versions[state.activeVersion], ps = prods(), n = news();
+  logEvent('publish', {
+    newsTitle: n.title, newsSource: n.source, live: !!n.live, tone: state.tone,
+    version: v.name, chars: v.text.length,
+    productIds: ps.map(p => p.id), productNames: ps.map(p => p.name),
+    gmvPotential: ps.reduce((s, p) => s + p.price, 0),
+    model: state.llmMeta ? state.llmMeta.model : null,
+  });
+  PublishIndex.add(news().title);          // 登记到去重索引,避免下一轮重复发
+  toast('微博已发送(模拟)', true);
+  render();
+}
+function resetFlow() {
+  Object.assign(state, { step: 1, newsId: null, selectedPids: [], versions: null, activeVersion: 0, reviewed: false, sent: false, generating: false, llmMeta: null, llmError: null });
+  toast('已重置,开始新任务');
+  render();
+}
+
+/* =================================================================
+ * 自动模式 —— 全自动流水线
+ *
+ * 抓取 → 按热度/风险/匹配度筛选 → 自动选品 → 生成文案
+ *      → 合规校验(复用 eval.js 的规则引擎)→ 倒计时 → 自动发送
+ *
+ * 安全底线(不可关闭):
+ *   1. 灾难/疫情/战争/犯罪类风险热点绝不自动发送
+ *   2. 违禁词或价格幻觉不通过 → 转人工复核,不自动发送
+ *   3. 每条发送前有可取消的倒计时
+ * ================================================================= */
+const AUTO_DEFAULTS = {
+  heatMin: 90,        // 热度阈值
+  minMatch: 2,        // 至少匹配到几件商品
+  minScore: 75,       // 头名商品的最低匹配度
+  maxProducts: 2,     // 每条最多带几件商品
+  maxSend: 3,         // 每轮最多自动发送几条
+  styleIdx: 0,        // 使用哪个版本风格
+  countdown: 8,       // 发送前倒计时秒数
+  repairRounds: 2,    // 合规不过时自动修正的最大轮数(0 = 直接转人工)
+  dupWindow: 72,      // 去重时间窗(小时):窗口内发过的同类热点不再发
+  dupThreshold: 0.55, // 标题相似度阈值,超过即判为同一件事
+  strictRules: true,  // 合规不过是否转人工(强制 true)
+};
+const AUTO_STAGES = ['抓取热点', '筛选候选', '智能选品', '生成文案', '合规校验', '自动发送'];
+
+function loadAutoCfg() {
+  try { return { ...AUTO_DEFAULTS, ...JSON.parse(localStorage.getItem('hotspot.auto') || '{}') }; }
+  catch (e) { return { ...AUTO_DEFAULTS }; }
+}
+function saveAutoCfg() { localStorage.setItem('hotspot.auto', JSON.stringify(state.autoCfg)); }
+function loadAutoList() {
+  try { return JSON.parse(localStorage.getItem('hotspot.autolist') || '[]'); } catch (e) { return []; }
+}
+function saveAutoList() {
+  localStorage.setItem('hotspot.autolist', JSON.stringify(state.autoList.slice(0, 50)));
+}
+
+function setMode(m) {
+  state.mode = m;
+  if (m === 'auto' && !state.autoCfg) state.autoCfg = loadAutoCfg();
+  render();
+}
+function setAutoCfg(k, v) {
+  state.autoCfg[k] = (k === 'styleIdx') ? Number(v) : Number(v);
+  saveAutoCfg();
+  render();
+}
+
+/* ---------- 清单抽屉 ---------- */
+function openDrawer() { state.autoUnread = 0; $('#drawer').classList.add('show'); $('#drawerMask').classList.add('show'); renderDrawer(); renderBell(); }
+function closeDrawer() { $('#drawer').classList.remove('show'); $('#drawerMask').classList.remove('show'); }
+function renderBell() {
+  const dot = $('#bellDot');
+  if (!dot) return;
+  dot.style.display = state.autoUnread ? 'grid' : 'none';
+  dot.textContent = state.autoUnread > 99 ? '99+' : state.autoUnread;
+}
+const AUTO_ST = {
+  sent:     { ic: '✓', cls: 'sent',     label: '已自动发送' },
+  review:   { ic: '!', cls: 'review',   label: '待人工复核' },
+  skipped:  { ic: '–', cls: 'skip',     label: '已跳过' },
+  failed:   { ic: '✕', cls: 'fail',     label: '生成失败' },
+  recalled: { ic: '↩', cls: 'recalled', label: '已撤回' },
+};
+function renderDrawer() {
+  const body = $('#drawerBody'); if (!body) return;
+  const list = state.autoList;
+  const sent = list.filter(x => x.status === 'sent').length;
+  const review = list.filter(x => x.status === 'review').length;
+  $('#drawerSub').textContent = list.length
+    ? `共 ${list.length} 条 · 已发送 ${sent} · 待复核 ${review}`
+    : '自动模式跑过之后,这里会记录每一条的处理结果';
+  $('#drawerFootNote').textContent = list.length ? `仅保留最近 50 条` : '';
+  if (!list.length) {
+    body.innerHTML = `<div class="empty-state" style="min-height:200px"><div>
+      <div class="icon">—</div><div class="t">清单为空</div>
+      <div class="d">切换到「自动模式」并启动流水线后,每一条自动处理的热点都会出现在这里。</div>
+    </div></div>`;
+    return;
+  }
+  body.innerHTML = list.map((x, i) => {
+    const st = AUTO_ST[x.status] || AUTO_ST.skipped;
+    return `<div class="auto-item">
+      <span class="st ${st.cls}">${st.ic}</span>
+      <div class="body">
+        <div class="t">${esc(x.newsTitle)}</div>
+        <div class="m">${st.label} · ${esc(x.at)} · ${esc(x.source || '')}${x.heat ? ` · 热度 ${x.heat}` : ''}${x.products && x.products.length ? ` · ${esc(x.products.join('、'))}` : ''}</div>
+        ${x.text ? `<div class="copy">${esc(x.text.slice(0, 130))}${x.text.length > 130 ? '…' : ''}</div>` : ''}
+        ${x.reason ? `<div class="why">${esc(x.reason)}</div>` : ''}
+        <div class="auto-acts">
+          ${x.text ? `<button class="btn btn-ghost btn-sm" onclick="copyAutoItem(${i})">复制文案</button>` : ''}
+          ${x.status === 'sent' ? `<button class="btn btn-ghost btn-sm" onclick="recallAuto(${i})">↩ 撤回(模拟)</button>` : ''}
+          ${x.status === 'review' && x.text ? `<button class="btn btn-ghost btn-sm" onclick="reviewInWorkbench(${i})">→ 转到手工审核</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function pushAuto(item) {
+  state.autoList.unshift({ at: new Date().toLocaleString('zh-CN', { hour12: false }), ...item });
+  state.autoUnread++;
+  saveAutoList(); renderDrawer(); renderBell();
+}
+function copyAutoItem(i) {
+  const t = state.autoList[i].text || '';
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+    .then(() => toast('文案已复制', true)).catch(() => toast('复制失败,请手动选择'));
+}
+function recallAuto(i) {
+  state.autoList[i].status = 'recalled';
+  state.autoList[i].reason = '已由运营手动撤回(模拟)';
+  saveAutoList(); renderDrawer(); render();
+  toast('已撤回该条(模拟)');
+}
+/* 待复核的条目一键载入手工流程 */
+function reviewInWorkbench(i) {
+  const it = state.autoList[i];
+  if (!it.snapshot) { toast('该条缺少上下文快照,无法转入手工流程'); return; }
+  newsList = [it.snapshot.news, ...newsList.filter(n => n.id !== it.snapshot.news.id)];
+  state.newsId = it.snapshot.news.id;
+  state.selectedPids = it.snapshot.pids.filter(id => productList.some(p => p.id === id));
+  state.versions = [{ name: '自动生成 · 待复核', text: it.text, status: 'done' }];
+  state.activeVersion = 0;
+  state.llmMeta = it.snapshot.meta || null;
+  state.reviewed = false; state.sent = false;
+  state.mode = 'manual'; state.step = 5;
+  closeDrawer(); render();
+  toast('已载入手工流程,请人工复核后再决定是否发送');
+}
+function clearAutoList() {
+  if (!state.autoList.length) return;
+  if (!confirm('确定清空自动发送清单?')) return;
+  state.autoList = []; state.autoUnread = 0;
+  saveAutoList(); renderDrawer(); renderBell(); render();
+}
+function exportAutoList() {
+  const blob = new Blob([JSON.stringify(state.autoList, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'auto-send-list.json'; a.click();
+  URL.revokeObjectURL(a.href);
+  toast('清单已导出', true);
+}
+
+/* ---------- 流水线 ---------- */
+function stopAuto() {
+  state.autoStop = true;
+  if (state.autoAbort) state.autoAbort.abort();
+  toast('正在停止自动流水线…');
+}
+function cancelCountdown() { state.autoCancelSend = true; }
+
+async function runAuto() {
+  if (state.autoRunning) return;
+  if (LlmStore.cfg.mode === 'mock') {
+    toast('自动模式需要真实大模型,请先在「模型设置」中切换');
+    openSettings(); return;
+  }
+  const cfg = state.autoCfg;
+  state.autoRunning = true; state.autoStop = false; state.autoStage = 0; state.autoLog = [];
+  state.autoAbort = new AbortController();
+  render();
+
+  const log = (msg) => { state.autoLog.unshift(`${new Date().toLocaleTimeString('zh-CN', { hour12: false })}  ${msg}`); render(); };
+
+  try {
+    /* ---- 1. 抓取 ---- */
+    state.autoStage = 0; log('开始抓取实时热榜…'); render();
+    await doCrawl();
+    if (!state.liveNews) log('实时抓取不可用,改用当前列表继续');
+
+    /* ---- 2. 筛选候选 ---- */
+    state.autoStage = 1; render();
+    const candidates = [];
+    for (const n of newsList) {
+      if (state.autoStop) break;
+      if (n.risk && n.risk.level === 'block') {
+        pushAuto({ status: 'skipped', newsTitle: n.title, source: n.source, heat: n.heat, reason: `风险拦截:${n.risk.reason}` });
+        continue;
+      }
+      /* 去重:同一批里已有别的源报过同一件事 */
+      if (n.dupOf) {
+        pushAuto({ status: 'skipped', newsTitle: n.title, source: n.source, heat: n.heat,
+          reason: `同源重复:与「${n.dupTitle}」是同一件事(相似度 ${n.dupScore}),本轮只处理热度最高的那条` });
+        continue;
+      }
+      /* 去重:近期已经发过同一个热点 */
+      if (n.published) {
+        pushAuto({ status: 'skipped', newsTitle: n.title, source: n.source, heat: n.heat,
+          reason: `重复发布拦截:${n.published.hoursAgo}h 前已发过「${n.published.matched}」(相似度 ${n.published.score},去重窗口 ${cfg.dupWindow}h)` });
+        continue;
+      }
+      if (n.heat < cfg.heatMin) continue;
+      const ms = matchesFor(n).filter(m => productList.some(p => p.id === m.pid));
+      if (ms.length < cfg.minMatch || !ms.length || ms[0].score < cfg.minScore) {
+        pushAuto({ status: 'skipped', newsTitle: n.title, source: n.source, heat: n.heat,
+          reason: ms.length ? `匹配度不足(最高 ${ms[0].score},阈值 ${cfg.minScore};匹配 ${ms.length} 件,要求 ${cfg.minMatch} 件)` : '未匹配到任何商品' });
+        continue;
+      }
+      candidates.push({ n, ms: ms.slice(0, cfg.maxProducts) });
+      if (candidates.length >= cfg.maxSend) break;
+    }
+    log(`筛选完成:${candidates.length} 条进入自动创作(热度≥${cfg.heatMin}、匹配≥${cfg.minMatch} 件)`);
+    if (!candidates.length) {
+      toast('本轮没有符合条件的热点,可降低热度阈值后重试');
+      state.autoRunning = false; render(); return;
+    }
+
+    /* ---- 3~6. 逐条处理 ---- */
+    for (const c of candidates) {
+      if (state.autoStop) break;
+      const ps = c.ms.map(m => productList.find(p => p.id === m.pid)).filter(Boolean);
+
+      state.autoStage = 2; log(`「${c.n.title.slice(0, 18)}」选品:${ps.map(p => p.name.split(' ·')[0]).join('、')}`);
+
+      /* 生成文案 */
+      state.autoStage = 3; render();
+      const style = styles()[Math.min(cfg.styleIdx, styles().length - 1)] || styles()[0];
+      let text = '', meta = null;
+      const t0 = performance.now();
+      try {
+        const r = await llmChat(
+          PromptStore.buildMessages({ news: c.n, products: ps, tone: state.tone, style }),
+          { stream: false, signal: state.autoAbort.signal });
+        text = (r.text || '').trim();
+        meta = { model: LlmStore.cfg.model, mode: LlmStore.cfg.mode, ms: Math.round(performance.now() - t0),
+                 prompt_tokens: (r.usage && r.usage.prompt_tokens) || 0, completion_tokens: (r.usage && r.usage.completion_tokens) || 0 };
+      } catch (e) {
+        pushAuto({ status: 'failed', newsTitle: c.n.title, source: c.n.source, heat: c.n.heat,
+          products: ps.map(p => p.name.split(' ·')[0]), reason: '生成失败:' + e.message });
+        log(`✕ 生成失败:${e.message}`);
+        continue;
+      }
+      if (!text) {
+        pushAuto({ status: 'failed', newsTitle: c.n.title, source: c.n.source, heat: c.n.heat, reason: '模型返回为空' });
+        continue;
+      }
+
+      /* ---- 合规校验(复用评测引擎的规则层)---- */
+      state.autoStage = 4; render();
+      const kase = { news: c.n, products: ps, tone: state.tone };
+      let rules = runRules(text, kase);
+      let repairNote = '';
+
+      /* 校验没过先让模型自己改,改不好才转人工 —— 否则自动模式绝大多数都会卡在人工 */
+      if (rules.items.some(r => !r.pass) && cfg.repairRounds > 0) {
+        log(`「${c.n.title.slice(0, 14)}」规则分 ${rules.score},进入自动修正…`);
+        try {
+          const fix = await repairCopy(text, kase, {
+            maxRounds: cfg.repairRounds,
+            signal: state.autoAbort.signal,
+            onRound: ({ round, phase, score }) => {
+              if (phase === 'done') log(`  修正第 ${round} 轮 → 规则分 ${score}`);
+              if (phase === 'rejected') log(`  修正第 ${round} 轮改差了(${score}),保留上一版`);
+            },
+          });
+          if (fix.changed) {
+            const fixed = fix.history.flatMap(h => h.fixed || []);
+            text = fix.text; rules = fix.rules;
+            repairNote = `自动修正 ${fix.rounds} 轮后规则分 ${rules.score}` + (fixed.length ? `(修复:${fixed.join('、')})` : '');
+            log(`  修正完成:${rules.score} 分`);
+          }
+        } catch (e) {
+          if (e.name === 'AbortError') break;
+          log(`  修正失败:${e.message}`);
+        }
+      }
+
+      const hardFails = rules.items.filter(r => !r.pass && (r.key === 'banned' || r.key === 'price'));
+      const softFails = rules.items.filter(r => !r.pass && r.key !== 'banned' && r.key !== 'price');
+      const snapshot = { news: c.n, pids: ps.map(p => p.id), meta };
+
+      if (hardFails.length) {
+        pushAuto({ status: 'review', newsTitle: c.n.title, source: c.n.source, heat: c.n.heat,
+          products: ps.map(p => p.name.split(' ·')[0]), text, snapshot,
+          reason: `合规未通过,已转人工复核:${hardFails.map(r => r.label + '(' + r.detail + ')').join(';')}`
+            + (repairNote ? ` · ${repairNote}` : '') });
+        log(`「${c.n.title.slice(0, 14)}」合规未通过,转人工复核`);
+        continue;
+      }
+
+      /* ---- 倒计时后发送 ---- */
+      state.autoStage = 5;
+      state.autoPending = { news: c.n, products: ps, text, rules, left: cfg.countdown };
+      state.autoCancelSend = false;
+      render();
+      for (let s = cfg.countdown; s > 0; s--) {
+        if (state.autoStop || state.autoCancelSend) break;
+        state.autoPending.left = s;
+        render();
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      const cancelled = state.autoCancelSend || state.autoStop;
+      state.autoPending = null;
+
+      if (cancelled) {
+        pushAuto({ status: 'review', newsTitle: c.n.title, source: c.n.source, heat: c.n.heat,
+          products: ps.map(p => p.name.split(' ·')[0]), text, snapshot, reason: '发送前被人工取消,已转人工复核' });
+        log(`↩ 「${c.n.title.slice(0, 14)}」被取消发送`);
+        if (state.autoStop) break;
+        continue;
+      }
+
+      pushAuto({ status: 'sent', newsTitle: c.n.title, source: c.n.source, heat: c.n.heat,
+        products: ps.map(p => p.name.split(' ·')[0]), text, snapshot,
+        reason: (softFails.length ? `已发送,但有非致命提示:${softFails.map(r => r.label).join('、')}` : `合规校验全部通过(规则分 ${rules.score})`)
+          + (repairNote ? ` · ${repairNote}` : '') });
+      logEvent('publish', {
+        auto: true, newsTitle: c.n.title, newsSource: c.n.source, live: !!c.n.live, tone: state.tone,
+        version: style.name, chars: text.length,
+        productIds: ps.map(p => p.id), productNames: ps.map(p => p.name),
+        gmvPotential: ps.reduce((s, p) => s + p.price, 0),
+        model: LlmStore.cfg.model, ruleScore: rules.score,
+      });
+      PublishIndex.add(c.n.title);          // 同一轮内后续候选也能查到
+      c.n.published = { duplicate: true, matched: c.n.title, score: 1, at: new Date().toISOString(), hoursAgo: 0 };
+      log(`已自动发送:「${c.n.title.slice(0, 16)}」`);
+    }
+
+    const sent = state.autoList.filter(x => x.status === 'sent').length;
+    const review = state.autoList.filter(x => x.status === 'review').length;
+    toast(`自动流水线结束 · 已发送 ${sent} 条,待复核 ${review} 条`, true);
+  } finally {
+    state.autoRunning = false; state.autoPending = null; state.autoAbort = null;
+    state.autoStage = -1;
+    render();
+  }
+}
+
+/* ---------- 自动模式视图 ---------- */
+function viewAuto() {
+  const cfg = state.autoCfg;
+  const list = state.autoList;
+  const sent = list.filter(x => x.status === 'sent').length;
+  const review = list.filter(x => x.status === 'review').length;
+  const skipped = list.filter(x => x.status === 'skipped').length;
+  const p = state.autoPending;
+
+  return `
+  <div class="page-head">
+    <div>
+      <div class="page-title">自动流水线</div>
+      <div class="page-desc">达到热度阈值且完成商品匹配的热点,将自动生成文案并在合规校验通过后自动发送</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="openDrawer()">自动发送清单${list.length ? `(${list.length})` : ''}</button>
+  </div>
+
+  <div class="card auto-hero">
+    <h3>${state.autoRunning ? '流水线运行中…' : '流水线待启动'}</h3>
+    <div class="d">当前模型 <b>${esc(LlmStore.label())}</b> · 语调 <b>${esc(state.tone)}</b> · 风格 <b>${esc((styles()[cfg.styleIdx] || styles()[0]).name)}</b></div>
+    <div class="stage-row">
+      ${AUTO_STAGES.map((s, i) => `
+        <span class="stage ${state.autoStage === i ? 'on' : (state.autoStage > i ? 'done' : '')}">${state.autoStage > i ? '✓' : i + 1}. ${s}</span>
+        ${i < AUTO_STAGES.length - 1 ? '<span class="stage-sep">→</span>' : ''}`).join('')}
+    </div>
+    ${p ? `
+      <div class="countdown">
+        <span class="num">${p.left}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700">即将自动发送:${esc(p.news.title.slice(0, 26))}</div>
+          <div style="font-size:11.5px;color:var(--ink-3)">合规校验已通过(规则分 ${p.rules.score})· ${esc(p.products.map(x => x.name.split(' ·')[0]).join('、'))}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="cancelCountdown()">取消这条</button>
+      </div>` : ''}
+    <div style="display:flex;gap:10px;margin-top:14px">
+      ${state.autoRunning
+        ? `<button class="btn btn-ghost" onclick="stopAuto()">■ 停止流水线</button>`
+        : `<button class="btn btn-primary btn-lg" onclick="runAuto()">▶ 启动自动流水线</button>`}
+      <button class="btn btn-ghost" onclick="setMode('manual')">切回手工模式</button>
+    </div>
+  </div>
+
+  <div class="card" style="padding:16px 18px;margin-bottom:16px">
+    <h4 style="font-size:13px;font-weight:700;margin-bottom:12px">自动化规则</h4>
+    <div class="cfg-grid">
+      <div class="cfg-item">
+        <label>热度阈值 <span class="val">${cfg.heatMin}</span></label>
+        <input type="range" min="50" max="99" value="${cfg.heatMin}" ${state.autoRunning ? 'disabled' : ''} oninput="setAutoCfg('heatMin', this.value)">
+        <div class="tip">只处理热度 ≥ ${cfg.heatMin} 的热点</div>
+      </div>
+      <div class="cfg-item">
+        <label>最低匹配度 <span class="val">${cfg.minScore}</span></label>
+        <input type="range" min="60" max="98" value="${cfg.minScore}" ${state.autoRunning ? 'disabled' : ''} oninput="setAutoCfg('minScore', this.value)">
+        <div class="tip">头名商品匹配度需 ≥ ${cfg.minScore}</div>
+      </div>
+      <div class="cfg-item">
+        <label>最少匹配商品数</label>
+        <input type="number" min="1" max="6" value="${cfg.minMatch}" ${state.autoRunning ? 'disabled' : ''} onchange="setAutoCfg('minMatch', this.value)">
+        <div class="tip">不足则跳过该热点</div>
+      </div>
+      <div class="cfg-item">
+        <label>每条带货商品数</label>
+        <input type="number" min="1" max="4" value="${cfg.maxProducts}" ${state.autoRunning ? 'disabled' : ''} onchange="setAutoCfg('maxProducts', this.value)">
+        <div class="tip">取匹配度最高的前 N 件</div>
+      </div>
+      <div class="cfg-item">
+        <label>本轮最多发送</label>
+        <input type="number" min="1" max="10" value="${cfg.maxSend}" ${state.autoRunning ? 'disabled' : ''} onchange="setAutoCfg('maxSend', this.value)">
+        <div class="tip">防止一次刷屏</div>
+      </div>
+      <div class="cfg-item">
+        <label>发送前倒计时(秒)</label>
+        <input type="number" min="0" max="60" value="${cfg.countdown}" ${state.autoRunning ? 'disabled' : ''} onchange="setAutoCfg('countdown', this.value)">
+        <div class="tip">倒计时内可人工叫停</div>
+      </div>
+      <div class="cfg-item">
+        <label>去重时间窗(小时)</label>
+        <input type="number" min="0" max="720" value="${cfg.dupWindow}" ${state.autoRunning ? 'disabled' : ''} onchange="setAutoCfg('dupWindow', this.value)">
+        <div class="tip">窗口内发过的同一热点不再重复发;0 = 不做历史去重</div>
+      </div>
+      <div class="cfg-item">
+        <label>标题相似度阈值 <span class="val">${cfg.dupThreshold}</span></label>
+        <input type="range" min="0.3" max="0.9" step="0.05" value="${cfg.dupThreshold}" ${state.autoRunning ? 'disabled' : ''} oninput="setAutoCfg('dupThreshold', this.value)">
+        <div class="tip">超过该值判为同一件事(实测同源标题 0.6~0.9,不同事件 0~0.25)</div>
+      </div>
+      <div class="cfg-item">
+        <label>合规自动修正轮数</label>
+        <input type="number" min="0" max="3" value="${cfg.repairRounds}" ${state.autoRunning ? 'disabled' : ''} onchange="setAutoCfg('repairRounds', this.value)">
+        <div class="tip">校验不过时先让模型按失败项改,改不好才转人工;0 = 不修直接转人工</div>
+      </div>
+      <div class="cfg-item">
+        <label>使用的版本风格</label>
+        <select ${state.autoRunning ? 'disabled' : ''} onchange="setAutoCfg('styleIdx', this.value)">
+          ${styles().map((s, i) => `<option value="${i}" ${cfg.styleIdx === i ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+        </select>
+        <div class="tip">在后台「提示词配置」中维护</div>
+      </div>
+    </div>
+    <div class="lock-note">
+      以下安全策略强制开启,不可关闭:<b>灾难 / 疫情 / 战争 / 犯罪类风险热点绝不自动发送</b>;文案出现<b>广告法违禁词或编造价格</b>时自动转人工复核。
+    </div>
+  </div>
+
+  <div class="gen-layout" style="grid-template-columns:1fr 340px">
+    <div class="card" style="padding:16px 18px">
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:10px">本轮处理结果 ${list.length ? `<span style="font-weight:400;color:var(--ink-3)">· 已发送 ${sent} · 待复核 ${review} · 跳过 ${skipped}</span>` : ''}</h4>
+      ${list.length
+        ? list.slice(0, 8).map((x, i) => {
+            const st = AUTO_ST[x.status] || AUTO_ST.skipped;
+            return `<div class="auto-item">
+              <span class="st ${st.cls}">${st.ic}</span>
+              <div class="body">
+                <div class="t">${esc(x.newsTitle)}</div>
+                <div class="m">${st.label} · ${esc(x.at)}${x.heat ? ` · 热度 ${x.heat}` : ''}${x.products && x.products.length ? ` · ${esc(x.products.join('、'))}` : ''}</div>
+                ${x.text ? `<div class="copy">${esc(x.text.slice(0, 120))}${x.text.length > 120 ? '…' : ''}</div>` : ''}
+                ${x.reason ? `<div class="why">${esc(x.reason)}</div>` : ''}
+              </div>
+            </div>`;
+          }).join('') + (list.length > 8 ? `<button class="btn btn-ghost btn-sm" onclick="openDrawer()">查看全部 ${list.length} 条 →</button>` : '')
+        : `<div class="empty-state" style="min-height:180px"><div>
+            <div class="icon">—</div><div class="t">尚未运行</div>
+            <div class="d">点击上方「启动自动流水线」,系统会抓取实时热榜、筛选高热度且能匹配到商品的热点,自动生成并发送。</div>
+          </div></div>`}
+    </div>
+    <div class="card" style="padding:16px 18px">
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:10px">运行日志</h4>
+      ${state.autoLog && state.autoLog.length
+        ? `<div style="font-size:11.5px;color:var(--ink-2);line-height:1.9;font-family:ui-monospace,Menlo,monospace;max-height:340px;overflow-y:auto">
+            ${state.autoLog.map(l => `<div>${esc(l)}</div>`).join('')}</div>`
+        : `<div style="font-size:12px;color:var(--ink-3)">启动后这里会实时输出每一步的处理过程。</div>`}
+    </div>
+  </div>`;
+}
+
+/* =================================================================
+ * 模型设置弹窗
+ * ================================================================= */
+let modeDraft = 'mock';
+const MODE_TIP = {
+  mock:  '不调用任何外部接口,使用内置模板生成文案。适合离线演示与无密钥环境。',
+  proxy: '页面把请求发给本地 <code>node server.js</code> 的 <code>/api/llm</code>,由服务端附加密钥后转发给大模型。密钥不进入浏览器,也不受 CORS 限制 —— 推荐。',
+  direct:'浏览器直接请求厂商接口。若厂商未开放跨域(CORS)会被浏览器拦截,此时请改用「服务端代理」。',
+};
+function renderModeBadge() {
+  const b = $('#modeBadge'); if (!b) return;
+  const live = LlmStore.cfg.mode !== 'mock';
+  b.className = 'model-badge' + (live ? ' live' : '');
+  b.textContent = (live ? '' : '') + LlmStore.label();
+}
+function openSettings() {
+  const c = LlmStore.cfg;
+  $('#fProvider').innerHTML = Object.keys(PROVIDERS).map(k =>
+    `<option value="${k}" ${c.provider === k ? 'selected' : ''}>${PROVIDERS[k].label}</option>`).join('');
+  $('#fBase').value = c.baseUrl;
+  $('#fModel').value = c.model;
+  $('#fKey').value = c.apiKey;
+  $('#fTemp').value = c.temperature; $('#tVal').textContent = c.temperature;
+  $('#fStream').checked = !!c.stream;
+  $('#modelList').innerHTML = ((PROVIDERS[c.provider] || {}).models || []).map(m => `<option value="${m}">`).join('');
+  $('#testOut').innerHTML = '';
+  paintMode(c.mode);
+  $('#settingsMask').classList.add('show');
+}
+function closeSettings() { $('#settingsMask').classList.remove('show'); }
+function pickMode(m) { paintMode(m); }
+function paintMode(m) {
+  modeDraft = m;
+  document.querySelectorAll('#segMode button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  $('#apiFields').style.display = m === 'mock' ? 'none' : '';
+  $('#modeTip').innerHTML = MODE_TIP[m];
+  $('#keyOpt').textContent = m === 'proxy'
+    ? (LlmStore.server.hasServerKey ? '(服务端已配置,可留空)' : '(服务端未配置,需在此填写)')
+    : '';
+}
+function pickProvider(p) {
+  const v = PROVIDERS[p]; if (!v) return;
+  $('#fBase').value = v.base;
+  $('#fModel').value = v.models[0] || '';
+  $('#modelList').innerHTML = v.models.map(m => `<option value="${m}">`).join('');
+}
+function draftCfg() {
+  const p = $('#fProvider').value;
+  return {
+    mode: modeDraft, provider: p,
+    baseUrl: $('#fBase').value.trim() || PROVIDERS[p].base,
+    model: $('#fModel').value.trim() || (PROVIDERS[p].models[0] || ''),
+    apiKey: $('#fKey').value.trim(),
+    temperature: Number($('#fTemp').value),
+    stream: $('#fStream').checked,
+  };
+}
+function saveSettings() {
+  LlmStore.save(draftCfg());
+  renderModeBadge(); closeSettings(); render();
+  toast('模型设置已保存 · ' + LlmStore.label(), true);
+}
+async function testConn() {
+  const btn = $('#testBtn'), out = $('#testOut');
+  if (modeDraft === 'mock') { out.className = 'test-out ok'; out.textContent = '本地 Mock 模式无需连接测试。'; return; }
+  const backup = { ...LlmStore.cfg };
+  LlmStore.cfg = { ...backup, ...draftCfg(), temperature: 0.3 };
+  btn.disabled = true; btn.textContent = '测试中…';
+  out.className = 'test-out'; out.textContent = '';
+  const t0 = performance.now();
+  try {
+    const r = await llmChat([{ role: 'user', content: '只回复两个字:收到' }], { stream: false, max_tokens: 16 });
+    out.className = 'test-out ok';
+    out.textContent = `连接成功 · ${Math.round(performance.now() - t0)}ms · ${LlmStore.cfg.model}\n模型回复:${r.text || '(空)'}`
+      + (r.usage ? `\ntokens ↑${r.usage.prompt_tokens || 0} ↓${r.usage.completion_tokens || 0}` : '');
+  } catch (e) {
+    out.className = 'test-out bad';
+    out.textContent = '' + e.message;
+  } finally {
+    LlmStore.cfg = backup;
+    btn.disabled = false; btn.textContent = '测试连接';
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+
+/* =================================================================
+ * 渲染入口
+ * ================================================================= */
+const VIEWS = { 1: viewStep1, 2: viewStep2, 3: viewStep3, 4: viewStep4, 5: viewStep5 };
+function renderMainOnly() {
+  // 搜索输入时避免重渲染丢失焦点:只更新商品网格
+  const html = VIEWS[state.step]();
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const oldGrid = $('#main .prod-grid'), newGrid = tmp.querySelector('.prod-grid');
+  if (oldGrid && newGrid) oldGrid.innerHTML = newGrid.innerHTML; else $('#main').innerHTML = html;
+  renderNav(); renderContext();
+}
+function render() {
+  const auto = state.mode === 'auto';
+  const scrollTop = $('#main').scrollTop;
+  $('#main').innerHTML = auto ? viewAuto() : VIEWS[state.step]();
+  renderNav();
+  renderContext();
+  renderModeSeg();
+  renderBell();
+  /* 自动模式在流水线运行中会高频重绘,保持滚动位置以免界面乱跳 */
+  $('#main').scrollTop = (auto && state.autoRunning) ? scrollTop : 0;
+}
+function renderModeSeg() {
+  document.querySelectorAll('#modeSeg button').forEach(b => {
+    const on = b.dataset.mode === state.mode;
+    b.className = on ? 'on ' + (state.mode === 'auto' ? 'auto' : '') : '';
+  });
+}
+
+/* 启动:载入本机模型配置 + 提示词模板(服务端优先) */
+(async function init() {
+  LlmStore.load();
+  state.autoCfg = loadAutoCfg();
+  state.autoList = loadAutoList();
+  render();
+  renderModeBadge();
+  const autoSwitched = await LlmStore.probeServer();
+  await PromptStore.load();
+  /* 读取后台维护的商品库;并清掉已被删除商品的残留选择 */
+  const pl = await loadProducts();
+  productList = pl.products;
+  useMatchMap = pl.source === 'default';   // 换过商品库就不能再用旧的人工标注表
+  state.selectedPids = state.selectedPids.filter(id => productList.some(p => p.id === id));
+  if (!tones().includes(state.tone)) state.tone = tones()[0];
+  renderModeBadge();
+  render();
+  if (autoSwitched) toast('检测到服务端已配置密钥,已启用真实大模型:' + LlmStore.cfg.model, true);
+})();
+</script>
+</body>
+</html>
