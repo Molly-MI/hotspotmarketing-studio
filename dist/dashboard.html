@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据看板 · 热点营销工作台后台</title>
+<style>
+  :root {
+    --brand: #5b5bf6; --brand-dark: #4747d1; --brand-light: #eeeefe; --brand-lighter: #f6f6ff;
+    --ink: #1a1d29; --ink-2: #4b5063; --ink-3: #8a90a6;
+    --bg: #f7f8fb; --card: #fff; --line: #e6e8f0;
+    --green: #16a34a; --green-bg: #f2fbf5; --orange: #ea580c; --orange-bg: #fdf6f0;
+    --red: #dc2626; --red-bg: #fdf4f4;
+    --radius: 10px; --shadow: 0 1px 2px rgba(26,29,41,.05);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.6;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  button, input, textarea, select { font-family: inherit; }
+  button { cursor: pointer; border: none; background: none; }
+  a { color: var(--brand); }
+
+  /* ==== header ==== */
+  .header {
+    height: 56px; background: #fff; border-bottom: 1px solid var(--line); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
+    background: linear-gradient(135deg, #1a1d29, #4b5063); color: #fff; font-weight: 800; font-size: 15px;
+  }
+  .logo-name { font-size: 16px; font-weight: 700; }
+  .logo-sub { font-size: 11px; color: var(--ink-3); margin-left: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .src-badge {
+    font-size: 11.5px; font-weight: 600; padding: 4px 11px; border-radius: 999px;
+    background: var(--bg); color: var(--ink-3); border: 1px solid var(--line);
+  }
+  .src-badge.server { background: var(--green-bg); color: var(--green); border-color: #bbf0cd; }
+  .src-badge.local { background: var(--orange-bg); color: var(--orange); border-color: #fcd9bd; }
+  .src-badge.bad { background: var(--red-bg); color: var(--red); border-color: #fecaca; }
+
+  /* ==== layout ==== */
+  .layout { flex: 1; display: flex; min-height: 0; }
+  .sidebar { width: 210px; flex-shrink: 0; background: #fff; border-right: 1px solid var(--line); padding: 20px 12px; overflow-y: auto; }
+  .sidebar-title { font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: 1.5px; padding: 0 10px 12px; }
+  .nav-item { position: relative;
+    display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+    padding: 9px 11px; border-radius: 9px; font-size: 13.5px; font-weight: 600; color: var(--ink-2);
+    margin-bottom: 2px; transition: all .15s; text-decoration: none;
+  }
+  .nav-item:hover { background: var(--brand-lighter); }
+  .nav-item.on { background: var(--bg); color: var(--ink); font-weight: 600; }
+  .nav-item.on::before { content:''; position:absolute; left:0; top:7px; bottom:7px; width:3px; border-radius:2px; background:var(--brand); }
+  .nav-item .ic { font-size: 15px; }
+  .nav-item .n { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+  .nav-sep { border-top: 1px dashed var(--line); margin: 14px 8px; padding-top: 12px; }
+
+  .main { flex: 1; overflow-y: auto; padding: 24px 26px 60px; min-width: 0; }
+  .wrap { max-width: 1100px; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-desc { font-size: 13px; color: var(--ink-3); margin: 2px 0 18px; }
+
+  /* ==== card ==== */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; }
+  .card-head { padding: 15px 18px 12px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .card-title { font-size: 15px; font-weight: 700; }
+  .card-sub { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
+  .card-body { padding: 16px 18px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid2 > .card { margin-bottom: 18px; }
+  @media (max-width: 1080px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .hint { font-size: 11.5px; color: var(--ink-3); margin-top: 6px; line-height: 1.65; }
+  code { font-family: var(--mono); background: var(--bg); padding: 1px 5px; border-radius: 5px; font-size: 11.5px; }
+  .row { display: flex; gap: 12px; }
+  label.fl { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+  input[type=text], input[type=number] {
+    width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 8px 11px;
+    font-size: 13px; color: var(--ink); background: #fff; outline: none; transition: all .15s;
+  }
+  input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light); }
+
+  /* ==== 按钮 ==== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 15px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    border: 1px solid transparent; transition: all .15s; text-decoration: none; white-space: nowrap;
+  }
+  .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 2px 6px rgba(91,91,246,.28); }
+  .btn-primary:hover { background: var(--brand-dark); }
+  .btn-primary:disabled { background: #c3c4e8; cursor: not-allowed; box-shadow: none; }
+  .btn-ghost { background: #fff; color: var(--ink-2); border-color: var(--line); }
+  .btn-ghost:hover { border-color: #c8cbdc; color: var(--ink); }
+  .btn-ghost:disabled { color: var(--ink-3); cursor: not-allowed; }
+  .btn-sm { padding: 5px 11px; font-size: 12.5px; border-radius: 8px; }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-gray { background: var(--bg); color: var(--ink-3); }
+  .badge-orange { background: var(--orange-bg); color: var(--orange); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-brand { background: var(--brand-light); color: var(--brand-dark); }
+
+  /* ==== 工具条 ==== */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
+    background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 10px 14px;
+  }
+  .seg { display: inline-flex; background: var(--bg); border-radius: 10px; padding: 3px; gap: 2px; }
+  .seg button {
+    padding: 5px 13px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+    transition: all .15s;
+  }
+  .seg button.on { background: #fff; color: var(--brand-dark); box-shadow: 0 1px 3px rgba(26,29,41,.1); }
+  .tb-spacer { margin-left: auto; }
+  .tb-meta { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .switch { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); font-weight: 600; cursor: pointer; }
+  .switch input { accent-color: var(--brand); }
+
+  /* ==== KPI ==== */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(198px, 1fr)); gap: 12px; }
+  .kpi { border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; background: #fcfcfe; }
+  .kpi .k { font-size: 11.5px; color: var(--ink-3); font-weight: 700; display: flex; align-items: center; gap: 5px; }
+  .kpi .v { font-size: 25px; font-weight: 800; line-height: 1.35; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .kpi .v small { font-size: 13px; font-weight: 700; color: var(--ink-3); margin-left: 3px; }
+  .kpi .d { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; }
+  .kpi .delta { font-size: 11.5px; font-weight: 700; margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+  .delta .up { color: var(--green); } .delta .down { color: var(--red); }
+  .delta .warnup { color: var(--orange); } .delta .flat { color: var(--ink-3); }
+  .delta .base { color: var(--ink-3); font-weight: 500; }
+
+  /* ==== 图表 ==== */
+  .chart-box { width: 100%; overflow-x: auto; }
+  .chart-box svg { display: block; width: 100%; height: auto; min-width: 460px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; }
+  .lg { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); font-weight: 600; }
+  .lg i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .donut-wrap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .donut-wrap .chart-box { flex: 0 0 230px; }
+  .donut-wrap svg { min-width: 0; }
+  .donut-legend { flex: 1; min-width: 170px; }
+  .dl-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+  .dl-row:last-child { border-bottom: none; }
+  .dl-row i { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .dl-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+  .dl-row b { font-variant-numeric: tabular-nums; }
+  .dl-row .pc { color: var(--ink-3); font-size: 11.5px; width: 46px; text-align: right; font-variant-numeric: tabular-nums; }
+  .chart-tip {
+    position: fixed; z-index: 300; pointer-events: none; opacity: 0; transition: opacity .12s;
+    background: var(--ink); color: #fff; font-size: 12px; line-height: 1.65; padding: 7px 11px;
+    border-radius: 9px; box-shadow: 0 8px 26px rgba(0,0,0,.22); white-space: nowrap; font-weight: 500;
+  }
+  .chart-tip.show { opacity: 1; }
+  .chart-tip b { color: #fff; }
+
+  /* ==== 排行榜 ==== */
+  .rank { list-style: none; }
+  .rank li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .rank li:last-child { border-bottom: none; }
+  .rank .no {
+    width: 21px; height: 21px; flex-shrink: 0; border-radius: 6px; display: grid; place-items: center;
+    font-size: 11px; font-weight: 800; background: var(--bg); color: var(--ink-3);
+  }
+  .rank li:nth-child(1) .no { background: #fff1d6; color: #b45309; }
+  .rank li:nth-child(2) .no { background: #eef1f6; color: #64748b; }
+  .rank li:nth-child(3) .no { background: #fdeade; color: #b45309; }
+  .rank .body { flex: 1; min-width: 0; }
+  .rank .nm { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank .sub { font-size: 11px; color: var(--ink-3); }
+  .rank .bar { height: 6px; border-radius: 3px; background: var(--bg); margin-top: 5px; overflow: hidden; }
+  .rank .bar i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--brand), #8b8bfa); }
+  .rank .num { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .rank .num small { font-size: 11px; color: var(--ink-3); font-weight: 600; }
+
+  /* ==== 活动流水 ==== */
+  .flow { list-style: none; position: relative; padding-left: 16px; }
+  .flow::before { content: ''; position: absolute; left: 4px; top: 6px; bottom: 6px; width: 1px; background: var(--line); }
+  .flow li { position: relative; padding: 6px 0 6px 6px; font-size: 12.5px; }
+  .flow li::before {
+    content: ''; position: absolute; left: -16px; top: 13px; width: 9px; height: 9px;
+    border-radius: 50%; background: var(--ink-3); border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line);
+  }
+  .flow li.t-generate::before { background: var(--brand); }
+  .flow li.t-publish::before { background: var(--green); }
+  .flow li.t-crawl::before { background: var(--orange); }
+  .flow li.t-eval::before { background: #0ea5e9; }
+  .flow .ln1 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .flow .tm { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .flow .tx { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .flow .ln2 { font-size: 11px; color: var(--ink-3); margin-top: 1px; }
+
+  /* ==== 表格 ==== */
+  table.tb { width: 100%; border-collapse: collapse; }
+  table.tb th, table.tb td { padding: 7px 8px; font-size: 12.5px; text-align: left; border-bottom: 1px dashed var(--line); }
+  table.tb th { font-size: 11px; color: var(--ink-3); font-weight: 700; letter-spacing: .4px; }
+  table.tb td.num, table.tb th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.tb tr:last-child td { border-bottom: none; }
+
+  /* ==== 系统状态 ==== */
+  .sys { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .sys-item { border: 1px solid var(--line); border-radius: 11px; padding: 11px 13px; background: #fcfcfe; }
+  .sys-item .k { font-size: 11.5px; color: var(--ink-3); font-weight: 700; }
+  .sys-item .v { font-size: 14px; font-weight: 700; margin-top: 3px; word-break: break-all; }
+  .sys-item .s { font-size: 11px; color: var(--ink-3); }
+
+  /* ==== 状态提示 ==== */
+  .notice { border-radius: 11px; padding: 13px 15px; font-size: 13px; line-height: 1.8; }
+  .notice.warn { background: var(--orange-bg); border: 1px solid #fcd9bd; color: #9a3412; }
+  .notice.bad { background: var(--red-bg); border: 1px solid #fecaca; color: #991b1b; }
+  .empty-box { text-align: center; padding: 44px 20px; }
+  .empty-box .em { font-size: 40px; line-height: 1; }
+  .empty-box .t { font-size: 16px; font-weight: 700; margin-top: 12px; }
+  .empty-box .d { font-size: 13px; color: var(--ink-3); margin: 6px auto 16px; max-width: 460px; line-height: 1.8; }
+  .empty-sm { font-size: 12.5px; color: var(--ink-3); padding: 22px 8px; text-align: center; }
+  .spin {
+    display: inline-block; width: 12px; height: 12px; border: 2px solid var(--brand-light);
+    border-top-color: var(--brand); border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -2px;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
+
+  .toast {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-16px);
+    background: var(--ink); color: #fff; font-size: 13px; font-weight: 500;
+    padding: 10px 20px; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.2);
+    opacity: 0; pointer-events: none; transition: all .25s; z-index: 400;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--green); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d4d7e3; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark"></div>
+    <div>
+      <span class="logo-name">后台管理</span>
+      <span class="logo-sub">数据看板 · 运营指标总览</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="src-badge" id="srcBadge">加载中…</span>
+    <a class="btn btn-ghost btn-sm" href="index.html">← 返回工作台</a>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-title">后台模块</div>
+    <a class="nav-item on" href="dashboard.html"><span class="ic"></span>数据看板</a>
+    <a class="nav-item" href="admin.html"><span class="ic"></span>提示词配置</a>
+    <a class="nav-item" href="products.html"><span class="ic"></span>商品库管理</a>
+    <a class="nav-item" href="eval.html"><span class="ic"></span>效果评测 Eval</a>
+
+    <div class="nav-sep"></div>
+    <div class="sidebar-title" style="padding-bottom:8px">本页锚点</div>
+    <a class="nav-item" href="#sec-kpi"><span class="ic"></span>核心指标</a>
+    <a class="nav-item" href="#sec-chart"><span class="ic"></span>趋势图表</a>
+    <a class="nav-item" href="#sec-rank"><span class="ic"></span>排行与明细</a>
+    <a class="nav-item" href="#sec-sys"><span class="ic"></span>系统状态</a>
+
+    <div style="border-top:1px dashed var(--line);margin:14px 8px;padding-top:12px;font-size:11.5px;color:var(--ink-3);line-height:1.7">
+      数据来自工作台真实运行事件 <code>events.jsonl</code>,由 <code>node server.js</code> 落盘。
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="wrap">
+      <div class="page-title">数据看板</div>
+      <div class="page-desc">热点抓取 → 商品匹配 → 文案生成 → 审核发布,全链路运营指标一屏总览。</div>
+
+      <!-- ============ 工具条 ============ -->
+      <div class="toolbar">
+        <div class="seg" id="rangeSeg">
+          <button data-r="today" onclick="pickRange('today')">今日</button>
+          <button data-r="7d" class="on" onclick="pickRange('7d')">近 7 天</button>
+          <button data-r="30d" onclick="pickRange('30d')">近 30 天</button>
+          <button data-r="all" onclick="pickRange('all')">全部</button>
+        </div>
+        <span class="tb-meta" id="rangeMeta"></span>
+        <span class="tb-spacer"></span>
+        <label class="switch" title="每 30 秒自动拉取一次事件(不会触发真实抓取)">
+          <input type="checkbox" id="autoChk" onchange="toggleAuto(this.checked)"> 自动刷新 30s
+        </label>
+        <span class="tb-meta" id="lastRefresh">—</span>
+        <button class="btn btn-ghost btn-sm" onclick="exportJson()">导出 JSON</button>
+        <button class="btn btn-primary btn-sm" id="refreshBtn" onclick="refresh()">刷新</button>
+      </div>
+
+      <div id="offlineBox" style="display:none"></div>
+
+      <div id="dashBody" style="display:none">
+
+        <!-- ============ KPI ============ -->
+        <section class="card" id="sec-kpi" data-sec>
+          <div class="card-head">
+            <div>
+              <div class="card-title">核心指标</div>
+              <div class="card-sub" id="kpiSub">与上一个等长周期对比</div>
+            </div>
+            <div class="row" style="align-items:center;gap:8px">
+              <span class="tb-meta">单价 元/百万 token</span>
+              <input type="number" id="priceIn" min="0" step="0.1" style="width:78px" oninput="onPrice()" title="输入 token 单价(元 / 百万 token)">
+              <span class="tb-meta">↑ 输入</span>
+              <input type="number" id="priceOut" min="0" step="0.1" style="width:78px" oninput="onPrice()" title="输出 token 单价(元 / 百万 token)">
+              <span class="tb-meta">↓ 输出</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="kpis" id="kpiGrid"></div>
+            <div class="hint">
+              成本按上方单价换算,默认取 deepseek-chat 参考价(输入 2 元 / 输出 8 元 每百万 token)。
+              <b>参考价,以服务商官网为准</b>;未开启缓存命中折扣与阶梯价,仅供运营估算。
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 图表 ============ -->
+        <section class="card" id="sec-chart" data-sec>
+          <div class="card-head">
+            <div>
+              <div class="card-title">生成量 / 发布量趋势</div>
+              <div class="card-sub" id="trendSub"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="legend">
+              <span class="lg"><i style="background:#5b5bf6"></i>生成次数</span>
+              <span class="lg"><i style="background:#16a34a"></i>发布条数</span>
+              <span class="lg" style="color:var(--ink-3);font-weight:500">悬停柱体可查看当期抓取热点数</span>
+            </div>
+            <div class="chart-box" id="chTrend"></div>
+          </div>
+        </section>
+
+        <section class="card" data-sec>
+          <div class="card-head">
+            <div>
+              <div class="card-title">token 消耗趋势</div>
+              <div class="card-sub">输入 / 输出 token 堆叠面积,悬停查看当期成本</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="legend">
+              <span class="lg"><i style="background:#93c5fd"></i>输入 token</span>
+              <span class="lg"><i style="background:#5b5bf6"></i>输出 token</span>
+            </div>
+            <div class="chart-box" id="chToken"></div>
+          </div>
+        </section>
+
+        <div class="grid2">
+          <section class="card" style="margin-bottom:0">
+            <div class="card-head">
+              <div>
+                <div class="card-title"> 版本风格采用分布</div>
+                <div class="card-sub">已发布文案分别来自哪个候选版本</div>
+              </div>
+            </div>
+            <div class="card-body"><div id="chVersion"></div></div>
+          </section>
+          <section class="card" style="margin-bottom:0">
+            <div class="card-head">
+              <div>
+                <div class="card-title"> 语调分布</div>
+                <div class="card-sub">各主打语调被用于生成的次数</div>
+              </div>
+            </div>
+            <div class="card-body"><div id="chTone"></div></div>
+          </section>
+        </div>
+
+        <section class="card" data-sec style="margin-top:18px">
+          <div class="card-head">
+            <div>
+              <div class="card-title">评测总分趋势</div>
+              <div class="card-sub">来自效果评测台的历史运行记录,可看出改动提示词后质量是涨是跌</div>
+            </div>
+            <a class="btn btn-ghost btn-sm" href="eval.html">去评测台 →</a>
+          </div>
+          <div class="card-body"><div id="chScore"></div></div>
+        </section>
+
+        <!-- ============ 排行与明细 ============ -->
+        <div class="grid2" id="sec-rank" data-sec>
+          <section class="card" style="margin-bottom:0">
+            <div class="card-head">
+              <div>
+                <div class="card-title">热门商品 TOP 10</div>
+                <div class="card-sub">按被生成 / 发布引用的次数排序</div>
+              </div>
+            </div>
+            <div class="card-body"><div id="rankProd"></div></div>
+          </section>
+          <section class="card" style="margin-bottom:0">
+            <div class="card-head">
+              <div>
+                <div class="card-title">热点来源分布</div>
+                <div class="card-sub">被实际用于创作的热点来自哪些榜单</div>
+              </div>
+            </div>
+            <div class="card-body"><div id="rankSrc"></div></div>
+          </section>
+        </div>
+
+        <div class="grid2" style="margin-top:18px">
+          <section class="card" style="margin-bottom:0">
+            <div class="card-head">
+              <div>
+                <div class="card-title"> 抓取源健康度</div>
+                <div class="card-sub" id="crawlSub">来自最近一次抓取</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="liveBtn" onclick="probeLive()">实时探测</button>
+            </div>
+            <div class="card-body"><div id="srcHealth"></div></div>
+          </section>
+          <section class="card" style="margin-bottom:0">
+            <div class="card-head">
+              <div>
+                <div class="card-title">最近活动流水</div>
+                <div class="card-sub">最近 20 条运行事件</div>
+              </div>
+            </div>
+            <div class="card-body" style="max-height:430px;overflow-y:auto"><div id="flowList"></div></div>
+          </section>
+        </div>
+
+        <!-- ============ 系统状态 ============ -->
+        <section class="card" id="sec-sys" data-sec style="margin-top:18px">
+          <div class="card-head">
+            <div>
+              <div class="card-title"> 系统状态</div>
+              <div class="card-sub">模型、提示词、商品库与服务端配置的当前来源</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="sys" id="sysGrid"></div>
+          </div>
+        </section>
+
+      </div><!-- /dashBody -->
+    </div>
+  </main>
+</div>
+
+<div class="chart-tip" id="chartTip"></div>
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="prompts.js"></script>
+<script src="llm.js"></script>
+<script src="eval.js"></script>
+<script>
+/* =====================================================================
+ * dashboard.html —— 后台数据看板
+ * 主数据源:GET /api/events(工作台每次生成/发布/抓取都会追加一条事件)
+ * 辅助数据:/api/eval-runs(评测历史) /api/products /api/config /api/news
+ * 所有图表均为内联 SVG 自绘,无任何图表库与 CDN 依赖。
+ * ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const attr = s => esc(s).replace(/"/g, '&quot;');
+const tipAttr = html => ' data-tip="' + String(html).replace(/"/g, '&quot;') + '"';
+
+const DAY = 86400000;
+const PALETTE = ['#5b5bf6', '#16a34a', '#ea580c', '#0ea5e9', '#a855f7', '#f59e0b', '#ef4444', '#14b8a6', '#6366f1', '#84cc16'];
+const PRICE_LS = 'hotspot.dash.price';
+
+/* ---------- 全局状态 ---------- */
+const S = {
+  range: '7d',
+  events: [],
+  total: 0,
+  runs: [],
+  products: [],
+  productSource: 'default',
+  config: null,
+  serverOk: false,
+  live: null,            // /api/news 结果(页面加载时最多自动调用一次)
+  liveLoading: false,
+  liveError: '',
+  lastRefresh: null,
+  priceIn: 2,
+  priceOut: 8,
+  autoTimer: null,
+};
+
+/* =====================================================================
+ * 工具:格式化
+ * ===================================================================== */
+function group(s) { return String(s).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function fmtInt(n) { return group(Math.round(Number(n) || 0)); }
+function fmtMoney(n) {
+  const parts = (Number(n) || 0).toFixed(2).split('.');
+  return '¥' + group(parts[0]) + '.' + parts[1];
+}
+function fmtMs(ms) {
+  ms = Number(ms) || 0;
+  if (!ms) return '—';
+  return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : Math.round(ms) + 'ms';
+}
+function fmtPct(x) { return ((Number(x) || 0) * 100).toFixed(1) + '%'; }
+function fmtTokens(n) {
+  n = Number(n) || 0;
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e4) return (n / 1e4).toFixed(1) + '万';
+  return fmtInt(n);
+}
+function fmtTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  return d.toLocaleString('zh-CN', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+function pad2(n) { return String(n).padStart(2, '0'); }
+function startOfDay(t) { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function sum(arr, f) { return arr.reduce((a, b) => a + (Number(f(b)) || 0), 0); }
+
+function toast(msg, ok) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (ok ? ' success' : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* =====================================================================
+ * 时间范围
+ * ===================================================================== */
+function rangeOf(key) {
+  const t0 = startOfDay(Date.now());
+  if (key === 'today') return { from: t0, to: Infinity, prevFrom: t0 - DAY, prevTo: t0, label: '今日', prevLabel: '昨日' };
+  if (key === '7d') { const f = t0 - 6 * DAY; return { from: f, to: Infinity, prevFrom: f - 7 * DAY, prevTo: f, label: '近 7 天', prevLabel: '前 7 天' }; }
+  if (key === '30d') { const f = t0 - 29 * DAY; return { from: f, to: Infinity, prevFrom: f - 30 * DAY, prevTo: f, label: '近 30 天', prevLabel: '前 30 天' }; }
+  return { from: -Infinity, to: Infinity, prevFrom: 0, prevTo: 0, label: '全部', prevLabel: null };
+}
+function evTime(e) { const t = new Date(e.at).getTime(); return isNaN(t) ? 0 : t; }
+function inWindow(e, from, to) { const t = evTime(e); return t >= from && t < to; }
+function filterRange(evts, r) { return evts.filter(e => inWindow(e, r.from, r.to)); }
+
+/** 图表分桶:今日按小时,其余按天 */
+function bucketsFor(key) {
+  const now = Date.now(), t0 = startOfDay(now);
+  const out = [];
+  if (key === 'today') {
+    for (let i = 0; i < 24; i++) out.push({ t0: t0 + i * 3600000, t1: t0 + (i + 1) * 3600000, label: pad2(i) + ':00' });
+    return { list: out, unit: '小时' };
+  }
+  let days = key === '7d' ? 7 : key === '30d' ? 30 : 0;
+  if (!days) {
+    const times = S.events.map(evTime).filter(Boolean);
+    const first = times.length ? startOfDay(Math.min.apply(null, times)) : t0;
+    days = Math.min(60, Math.max(7, Math.round((t0 - first) / DAY) + 1));
+  }
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(t0 - i * DAY);
+    out.push({ t0: t0 - i * DAY, t1: t0 - (i - 1) * DAY, label: pad2(d.getMonth() + 1) + '/' + pad2(d.getDate()) });
+  }
+  return { list: out, unit: '天' };
+}
+
+/* =====================================================================
+ * 指标计算
+ * ===================================================================== */
+function metrics(evts) {
+  const gen = evts.filter(e => e.type === 'generate');
+  const pub = evts.filter(e => e.type === 'publish');
+  const crawl = evts.filter(e => e.type === 'crawl');
+  const versions = sum(gen, e => e.versions);
+  const okCopies = sum(gen, e => e.ok);
+  const tin = sum(gen, e => e.promptTokens);
+  const tout = sum(gen, e => e.completionTokens);
+  const msArr = gen.map(e => Number(e.ms) || 0).filter(v => v > 0);
+  return {
+    genRuns: gen.length,
+    copies: okCopies,
+    versions,
+    okRate: versions ? okCopies / versions : 0,
+    pubs: pub.length,
+    pubRate: gen.length ? pub.length / gen.length : 0,
+    tin, tout, tokens: tin + tout,
+    cost: tin / 1e6 * S.priceIn + tout / 1e6 * S.priceOut,
+    avgMs: msArr.length ? msArr.reduce((a, b) => a + b, 0) / msArr.length : 0,
+    crawls: crawl.length,
+    crawled: sum(crawl, e => e.total),
+    risk: sum(crawl, e => e.riskCount),
+    gmv: sum(pub, e => e.gmvPotential),
+    pubChars: pub.length ? sum(pub, e => e.chars) / pub.length : 0,
+  };
+}
+
+/** 环比标签:invert=true 时上涨用橙色(成本、风险这类"越低越好"的指标) */
+function deltaHtml(cur, prev, opts) {
+  const o = opts || {};
+  const r = rangeOf(S.range);
+  if (!r.prevLabel) return '<div class="delta"><span class="base">全部区间不做环比</span></div>';
+  const base = '<span class="base">vs ' + esc(r.prevLabel) + '</span>';
+  if (!prev && !cur) return '<div class="delta"><span class="flat">— 持平</span>' + base + '</div>';
+  if (!prev) return '<div class="delta"><span class="' + (o.invert ? 'warnup' : 'up') + '">↑ 新增</span>' + base + '</div>';
+  const d = (cur - prev) / Math.abs(prev);
+  if (Math.abs(d) < 0.0005) return '<div class="delta"><span class="flat">— 持平</span>' + base + '</div>';
+  const cls = d > 0 ? (o.invert ? 'warnup' : 'up') : (o.invert ? 'up' : 'down');
+  return '<div class="delta"><span class="' + cls + '">' + (d > 0 ? '↑' : '↓') + ' '
+    + Math.abs(d * 100).toFixed(1) + '%</span>' + base + '</div>';
+}
+
+function kpiCard(k, v, unit, d, delta) {
+  return '<div class="kpi">'
+    + '<div class="k">' + k + '</div>'
+    + '<div class="v">' + v + (unit ? '<small>' + esc(unit) + '</small>' : '') + '</div>'
+    + '<div class="d">' + d + '</div>' + (delta || '') + '</div>';
+}
+
+function renderKpi() {
+  const r = rangeOf(S.range);
+  const cur = metrics(filterRange(S.events, r));
+  const prev = r.prevLabel ? metrics(S.events.filter(e => inWindow(e, r.prevFrom, r.prevTo))) : null;
+  const P = k => (prev ? prev[k] : 0);
+
+  $('#kpiSub').textContent = r.prevLabel ? r.label + ' 与 ' + r.prevLabel + ' 对比' : '全部历史数据(不做环比)';
+  $('#rangeMeta').textContent = r.label + ' · 共 ' + fmtInt(filterRange(S.events, r).length) + ' 条事件 / 累计 ' + fmtInt(S.total) + ' 条';
+
+  const cards = [
+    kpiCard('' + esc(r.label) + '生成文案', fmtInt(cur.copies), '条',
+      fmtInt(cur.genRuns) + ' 次生成 · 成功率 ' + fmtPct(cur.okRate),
+      deltaHtml(cur.copies, P('copies'))),
+    kpiCard('' + esc(r.label) + '发布', fmtInt(cur.pubs), '条',
+      '发布率 ' + fmtPct(cur.pubRate) + ' · 预估 GMV ' + fmtMoney(cur.gmv),
+      deltaHtml(cur.pubs, P('pubs'))),
+    kpiCard('token 与成本', fmtTokens(cur.tokens), '',
+      '↑' + fmtTokens(cur.tin) + ' ↓' + fmtTokens(cur.tout) + ' · <b style="color:var(--ink-2)">' + fmtMoney(cur.cost) + '</b>',
+      deltaHtml(cur.cost, P('cost'), { invert: true })),
+    kpiCard('平均生成耗时', cur.avgMs ? fmtMs(cur.avgMs) : '—', '',
+      cur.genRuns ? '基于 ' + fmtInt(cur.genRuns) + ' 次生成(并发多版本)' : '暂无生成记录',
+      deltaHtml(cur.avgMs, P('avgMs'), { invert: true })),
+    kpiCard('抓取热点', fmtInt(cur.crawled), '条',
+      fmtInt(cur.crawls) + ' 次抓取 · 风险拦截 <b style="color:var(--orange)">' + fmtInt(cur.risk) + '</b> 条',
+      deltaHtml(cur.risk, P('risk'), { invert: true })),
+  ];
+  $('#kpiGrid').innerHTML = cards.join('');
+}
+
+/* =====================================================================
+ * SVG 图表工具
+ * ===================================================================== */
+function niceMax(v) {
+  if (!(v > 0)) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  const n = v / p;
+  const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
+  return m * p;
+}
+function axisText(x, y, t, anchor, size, color) {
+  return '<text x="' + x + '" y="' + y + '" text-anchor="' + (anchor || 'middle')
+    + '" font-size="' + (size || 10) + '" fill="' + (color || '#8a90a6') + '">' + esc(t) + '</text>';
+}
+function emptyChart(msg) { return '<div class="empty-sm">' + esc(msg) + '</div>'; }
+
+/** 分桶统计:把事件归入图表的时间桶 */
+function fillBuckets(bk) {
+  const list = bk.list.map(b => ({ t0: b.t0, t1: b.t1, label: b.label, gen: 0, pub: 0, crawl: 0, tin: 0, tout: 0 }));
+  const from = list.length ? list[0].t0 : 0;
+  const to = list.length ? list[list.length - 1].t1 : 0;
+  S.events.forEach(e => {
+    const t = evTime(e);
+    if (t < from || t >= to) return;
+    let i = 0;
+    for (; i < list.length; i++) if (t >= list[i].t0 && t < list[i].t1) break;
+    if (i >= list.length) return;
+    const b = list[i];
+    if (e.type === 'generate') { b.gen++; b.tin += Number(e.promptTokens) || 0; b.tout += Number(e.completionTokens) || 0; }
+    else if (e.type === 'publish') b.pub++;
+    else if (e.type === 'crawl') b.crawl += Number(e.total) || 0;
+  });
+  return list;
+}
+
+/* ---------- 图 1:生成 / 发布 / 抓取 分组柱状 ---------- */
+function chartTrend(bs, unit) {
+  if (!bs.length) return emptyChart('暂无数据');
+  const W = 740, H = 258, L = 50, R = 16, T = 18, B = 40;
+  const iw = W - L - R, ih = H - T - B;
+  /* 抓取热点数量级远大于生成/发布,放在 tooltip 里而不参与纵轴,避免小柱体被压扁 */
+  const max = niceMax(Math.max(1, ...bs.map(b => Math.max(b.gen, b.pub))));
+  const y = v => T + ih - (v / max) * ih;
+  let g = '';
+  for (let i = 0; i <= 4; i++) {
+    const yy = T + ih - ih * i / 4;
+    g += '<line x1="' + L + '" y1="' + yy + '" x2="' + (L + iw) + '" y2="' + yy + '" stroke="#e6e8f0" stroke-width="1"/>';
+    g += axisText(L - 8, yy + 3.5, fmtInt(max * i / 4), 'end');
+  }
+  const bw = iw / bs.length;
+  const barW = Math.max(3, Math.min(15, bw * 0.34));
+  const showVal = bs.length <= 16;
+  const step = Math.max(1, Math.ceil(bs.length / 10));
+  bs.forEach((b, i) => {
+    const cx = L + bw * (i + 0.5);
+    const trio = [
+      { v: b.gen, c: '#5b5bf6', off: -(barW / 2 + 1.5) },
+      { v: b.pub, c: '#16a34a', off: barW / 2 + 1.5 },
+    ];
+    trio.forEach(s => {
+      if (!s.v) return;
+      const h = Math.max(1.5, T + ih - y(s.v));
+      g += '<rect x="' + (cx + s.off - barW / 2) + '" y="' + (T + ih - h) + '" width="' + barW
+        + '" height="' + h + '" rx="2" fill="' + s.c + '"/>';
+      if (showVal && s.v) g += axisText(cx + s.off, T + ih - h - 4, fmtInt(s.v), 'middle', 9, '#4b5063');
+    });
+    if (i % step === 0 || i === bs.length - 1) g += axisText(cx, T + ih + 15, b.label);
+    /* 悬停热区 */
+    g += '<rect x="' + (L + bw * i) + '" y="' + T + '" width="' + bw + '" height="' + ih + '" fill="transparent" class="hit"'
+      + tipAttr('<b>' + esc(b.label) + '</b><br>生成 ' + fmtInt(b.gen) + ' 次 · 发布 ' + fmtInt(b.pub)
+        + ' 条<br>抓取热点 ' + fmtInt(b.crawl) + ' 条') + '/>';
+  });
+  g += '<line x1="' + L + '" y1="' + (T + ih) + '" x2="' + (L + iw) + '" y2="' + (T + ih) + '" stroke="#c8cbdc" stroke-width="1"/>';
+  g += axisText(L - 8, T - 6, '次/条', 'end', 9);
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="生成发布趋势">' + g + '</svg>';
+}
+
+/* ---------- 图 2:token 堆叠面积 ---------- */
+function chartToken(bs) {
+  if (!bs.length) return emptyChart('暂无数据');
+  const W = 740, H = 240, L = 56, R = 16, T = 18, B = 40;
+  const iw = W - L - R, ih = H - T - B;
+  const max = niceMax(Math.max(1, ...bs.map(b => b.tin + b.tout)));
+  const y = v => T + ih - (v / max) * ih;
+  const bw = iw / bs.length;
+  const xs = bs.map((b, i) => L + bw * (i + 0.5));
+  let g = '';
+  for (let i = 0; i <= 4; i++) {
+    const yy = T + ih - ih * i / 4;
+    g += '<line x1="' + L + '" y1="' + yy + '" x2="' + (L + iw) + '" y2="' + yy + '" stroke="#e6e8f0" stroke-width="1"/>';
+    g += axisText(L - 8, yy + 3.5, fmtTokens(max * i / 4), 'end');
+  }
+  const area = (vals, base) => {
+    let p = 'M' + xs[0] + ' ' + y(vals[0]);
+    for (let i = 1; i < xs.length; i++) p += 'L' + xs[i] + ' ' + y(vals[i]);
+    for (let i = xs.length - 1; i >= 0; i--) p += 'L' + xs[i] + ' ' + y(base[i]);
+    return p + 'Z';
+  };
+  const zero = bs.map(() => 0);
+  const vin = bs.map(b => b.tin);
+  const vtot = bs.map(b => b.tin + b.tout);
+  g += '<path d="' + area(vin, zero) + '" fill="#93c5fd" fill-opacity=".75"/>';
+  g += '<path d="' + area(vtot, vin) + '" fill="#5b5bf6" fill-opacity=".55"/>';
+  let ln = 'M' + xs[0] + ' ' + y(vtot[0]);
+  for (let i = 1; i < xs.length; i++) ln += 'L' + xs[i] + ' ' + y(vtot[i]);
+  g += '<path d="' + ln + '" fill="none" stroke="#4747d1" stroke-width="1.8" stroke-linejoin="round"/>';
+  const step = Math.max(1, Math.ceil(bs.length / 10));
+  bs.forEach((b, i) => {
+    const tot = b.tin + b.tout;
+    if (tot > 0) g += '<circle cx="' + xs[i] + '" cy="' + y(tot) + '" r="2.6" fill="#fff" stroke="#4747d1" stroke-width="1.6"/>';
+    if (i % step === 0 || i === bs.length - 1) g += axisText(xs[i], T + ih + 15, b.label);
+    const cost = b.tin / 1e6 * S.priceIn + b.tout / 1e6 * S.priceOut;
+    g += '<rect x="' + (L + bw * i) + '" y="' + T + '" width="' + bw + '" height="' + ih + '" fill="transparent" class="hit"'
+      + tipAttr('<b>' + esc(b.label) + '</b><br>输入 ' + fmtInt(b.tin) + ' · 输出 ' + fmtInt(b.tout)
+        + '<br>合计 ' + fmtInt(tot) + ' tokens · ' + fmtMoney(cost)) + '/>';
+  });
+  g += '<line x1="' + L + '" y1="' + (T + ih) + '" x2="' + (L + iw) + '" y2="' + (T + ih) + '" stroke="#c8cbdc" stroke-width="1"/>';
+  g += axisText(L - 8, T - 6, 'tokens', 'end', 9);
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="token 消耗趋势">' + g + '</svg>';
+}
+
+/* ---------- 图 3:环形图 ---------- */
+function arcPath(cx, cy, r, ri, a0, a1) {
+  const px = (a, rr) => [cx + rr * Math.cos(a), cy + rr * Math.sin(a)];
+  const large = (a1 - a0) > Math.PI ? 1 : 0;
+  const p0 = px(a0, r), p1 = px(a1, r), p2 = px(a1, ri), p3 = px(a0, ri);
+  return 'M' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2)
+    + 'A' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2)
+    + 'L' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2)
+    + 'A' + ri + ' ' + ri + ' 0 ' + large + ' 0 ' + p3[0].toFixed(2) + ' ' + p3[1].toFixed(2) + 'Z';
+}
+function chartDonut(items, centerLabel) {
+  const live = items.filter(i => i.value > 0);
+  if (!live.length) return emptyChart('该时间范围内还没有发布记录');
+  const total = sum(live, i => i.value);
+  const W = 230, H = 190, cx = 100, cy = 92, r = 74, ri = 46;
+  let g = '';
+  if (live.length === 1) {
+    g += '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((r + ri) / 2) + '" fill="none" stroke="' + live[0].color
+      + '" stroke-width="' + (r - ri) + '" class="hit"'
+      + tipAttr('<b>' + esc(live[0].label) + '</b><br>' + fmtInt(live[0].value) + ' 条 · 100.0%') + '/>';
+  } else {
+    let a = -Math.PI / 2;
+    live.forEach(it => {
+      const a1 = a + (it.value / total) * Math.PI * 2;
+      g += '<path d="' + arcPath(cx, cy, r, ri, a, a1) + '" fill="' + it.color + '" stroke="#fff" stroke-width="1.5" class="hit"'
+        + tipAttr('<b>' + esc(it.label) + '</b><br>' + fmtInt(it.value) + ' 条 · ' + fmtPct(it.value / total)) + '/>';
+      a = a1;
+    });
+  }
+  g += '<text x="' + cx + '" y="' + (cy + 2) + '" text-anchor="middle" font-size="22" font-weight="800" fill="#1a1d29">' + fmtInt(total) + '</text>';
+  g += axisText(cx, cy + 20, centerLabel || '条', 'middle', 11);
+  const legend = live.map(it => '<div class="dl-row"><i style="background:' + it.color + '"></i>'
+    + '<span class="nm" title="' + attr(it.label) + '">' + esc(it.label) + '</span>'
+    + '<b>' + fmtInt(it.value) + '</b><span class="pc">' + fmtPct(it.value / total) + '</span></div>').join('');
+  return '<div class="donut-wrap"><div class="chart-box"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="分布环形图">'
+    + g + '</svg></div><div class="donut-legend">' + legend + '</div></div>';
+}
+
+/* ---------- 图 4:横向条形 ---------- */
+function chartHBar(items, unitName) {
+  const live = items.filter(i => i.value > 0);
+  if (!live.length) return emptyChart('该时间范围内暂无数据');
+  const W = 470, L = 96, R = 54, T = 12, rowH = 30;
+  const H = T * 2 + live.length * rowH;
+  const iw = W - L - R;
+  const max = niceMax(Math.max(1, ...live.map(i => i.value)));
+  const total = sum(live, i => i.value);
+  let g = '';
+  for (let i = 0; i <= 4; i++) {
+    const x = L + iw * i / 4;
+    g += '<line x1="' + x + '" y1="' + T + '" x2="' + x + '" y2="' + (H - T) + '" stroke="#eef0f6" stroke-width="1"/>';
+    g += axisText(x, H - T + 12, fmtInt(max * i / 4), 'middle', 9);
+  }
+  live.forEach((it, i) => {
+    const cy = T + i * rowH + rowH / 2;
+    const w = Math.max(2, (it.value / max) * iw);
+    g += '<rect x="' + L + '" y="' + (cy - 9) + '" width="' + w + '" height="18" rx="4" fill="' + (it.color || PALETTE[i % PALETTE.length]) + '"/>';
+    g += '<text x="' + (L - 8) + '" y="' + (cy + 4) + '" text-anchor="end" font-size="11.5" font-weight="600" fill="#4b5063">'
+      + esc(it.label.length > 8 ? it.label.slice(0, 8) + '…' : it.label) + '</text>';
+    g += '<text x="' + (L + w + 7) + '" y="' + (cy + 4) + '" font-size="11" font-weight="700" fill="#1a1d29">' + fmtInt(it.value) + '</text>';
+    g += '<rect x="0" y="' + (cy - rowH / 2) + '" width="' + W + '" height="' + rowH + '" fill="transparent" class="hit"'
+      + tipAttr('<b>' + esc(it.label) + '</b><br>' + fmtInt(it.value) + ' ' + esc(unitName || '次') + ' · 占比 ' + fmtPct(it.value / total)) + '/>';
+  });
+  g += '<line x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - T) + '" stroke="#c8cbdc" stroke-width="1"/>';
+  return '<div class="chart-box"><svg viewBox="0 0 ' + W + ' ' + (H + 8) + '" role="img" aria-label="分布条形图">' + g + '</svg></div>';
+}
+
+/* ---------- 图 5:评测总分折线 ---------- */
+function chartScore(runs) {
+  if (!runs.length) return emptyChart(S.runs.length
+    ? '该时间范围内没有评测记录(历史共 ' + S.runs.length + ' 次)'
+    : '还没有评测运行记录,去「效果评测 Eval」跑一轮回归即可看到质量趋势');
+  const W = 740, H = 240, L = 44, R = 18, T = 20, B = 46;
+  const iw = W - L - R, ih = H - T - B;
+  const y = v => T + ih - (Math.max(0, Math.min(100, v)) / 100) * ih;
+  let g = '';
+  for (let i = 0; i <= 4; i++) {
+    const yy = T + ih - ih * i / 4;
+    g += '<line x1="' + L + '" y1="' + yy + '" x2="' + (L + iw) + '" y2="' + yy + '" stroke="#e6e8f0" stroke-width="1"/>';
+    g += axisText(L - 8, yy + 3.5, String(i * 25), 'end');
+  }
+  const n = runs.length;
+  const xs = runs.map((_, i) => n === 1 ? L + iw / 2 : L + (iw * i) / (n - 1));
+  if (n > 1) {
+    let p = 'M' + xs[0] + ' ' + y(runs[0].score);
+    for (let i = 1; i < n; i++) p += 'L' + xs[i] + ' ' + y(runs[i].score);
+    g += '<path d="' + p + '" fill="none" stroke="#5b5bf6" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+  const step = Math.max(1, Math.ceil(n / 8));
+  runs.forEach((r, i) => {
+    const prev = i > 0 ? runs[i - 1].score : null;
+    const up = prev == null ? null : r.score - prev;
+    const c = up == null ? '#5b5bf6' : up < 0 ? '#dc2626' : '#16a34a';
+    g += '<circle cx="' + xs[i] + '" cy="' + y(r.score) + '" r="4" fill="#fff" stroke="' + c + '" stroke-width="2.4"/>';
+    if (n <= 14) g += axisText(xs[i], y(r.score) - 10, r.score.toFixed(1), 'middle', 9.5, '#4b5063');
+    if (i % step === 0 || i === n - 1) g += axisText(xs[i], T + ih + 15, r.label);
+    g += '<rect x="' + (xs[i] - 14) + '" y="' + T + '" width="28" height="' + ih + '" fill="transparent" class="hit"'
+      + tipAttr('<b>' + esc(r.full) + '</b><br>总分 ' + r.score.toFixed(1)
+        + (up == null ? '' : '(' + (up >= 0 ? '↑+' : '↓') + up.toFixed(1) + ')')
+        + '<br>规则 ' + (r.rule == null ? '—' : r.rule.toFixed(1))
+        + ' · 裁判 ' + (r.judge == null ? '未开启' : r.judge.toFixed(1))
+        + '<br>' + esc(r.model) + ' · ' + fmtInt(r.done) + '/' + fmtInt(r.totalTasks) + ' 任务'
+        + (r.hash ? '<br>提示词 ' + esc(r.hash) : '')) + '/>';
+  });
+  g += '<line x1="' + L + '" y1="' + (T + ih) + '" x2="' + (L + iw) + '" y2="' + (T + ih) + '" stroke="#c8cbdc" stroke-width="1"/>';
+  g += axisText(L - 8, T - 6, '总分', 'end', 9);
+  g += axisText(L + iw / 2, H - 8, '按运行时间从旧到新排列 · 圆点变红表示较上一次下降', 'middle', 10);
+  return '<div class="chart-box"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="评测总分趋势">' + g + '</svg></div>';
+}
+
+/* =====================================================================
+ * 排行榜 / 明细
+ * ===================================================================== */
+function rankBar(pct) { return '<div class="bar"><i style="width:' + Math.max(2, pct * 100).toFixed(1) + '%"></i></div>'; }
+
+function renderProdRank(evts) {
+  const map = {};
+  evts.forEach(e => {
+    if (e.type !== 'generate' && e.type !== 'publish') return;
+    const ids = Array.isArray(e.productIds) ? e.productIds : [];
+    const names = Array.isArray(e.productNames) ? e.productNames : [];
+    const n = Math.max(ids.length, names.length);
+    for (let i = 0; i < n; i++) {
+      const key = ids[i] || names[i];
+      if (!key) continue;
+      const m = map[key] || (map[key] = { id: ids[i] || '', name: names[i] || ids[i], gen: 0, pub: 0 });
+      if (names[i]) m.name = names[i];
+      if (e.type === 'generate') m.gen++; else m.pub++;
+    }
+  });
+  const list = Object.keys(map).map(k => map[k]);
+  list.forEach(m => { m.total = m.gen + m.pub; });
+  list.sort((a, b) => b.total - a.total || b.pub - a.pub);
+  const top = list.slice(0, 10);
+  if (!top.length) return '<div class="empty-sm">该时间范围内还没有商品被引用</div>';
+  const max = top[0].total || 1;
+  return '<ul class="rank">' + top.map((m, i) => {
+    const p = S.products.find(x => x.id === m.id) || S.products.find(x => x.name === m.name);
+    const cat = p && p.cat ? p.cat : '未知品类';
+    const emo = p && p.emoji ? p.emoji + ' ' : '';
+    return '<li><span class="no">' + (i + 1) + '</span><div class="body">'
+      + '<div class="nm" title="' + attr(m.name) + '">' + esc(emo + m.name) + '</div>'
+      + '<div class="sub"><span class="badge badge-gray">' + esc(cat) + '</span> '
+      + '生成引用 ' + fmtInt(m.gen) + ' · 发布引用 ' + fmtInt(m.pub)
+      + (p && p.price != null ? ' · ¥' + esc(p.price) : '') + '</div>'
+      + rankBar(m.total / max) + '</div>'
+      + '<div class="num">' + fmtInt(m.total) + '<small> 次</small></div></li>';
+  }).join('') + '</ul>';
+}
+
+function renderSrcRank(evts) {
+  const map = {};
+  evts.forEach(e => {
+    if (e.type !== 'generate' && e.type !== 'publish') return;
+    const key = e.live ? (e.newsSource || '未知来源') : '内置演示';
+    const m = map[key] || (map[key] = { name: key, gen: 0, pub: 0, live: !!e.live });
+    if (e.type === 'generate') m.gen++; else m.pub++;
+  });
+  const list = Object.keys(map).map(k => map[k]);
+  list.forEach(m => { m.total = m.gen + m.pub; });
+  list.sort((a, b) => b.total - a.total);
+  if (!list.length) return '<div class="empty-sm">该时间范围内还没有热点被使用</div>';
+  const max = list[0].total || 1;
+  return '<ul class="rank">' + list.slice(0, 10).map((m, i) =>
+    '<li><span class="no">' + (i + 1) + '</span><div class="body">'
+    + '<div class="nm">' + esc(m.name) + ' <span class="badge ' + (m.live ? 'badge-green' : 'badge-gray') + '">'
+    + (m.live ? '实时抓取' : '演示数据') + '</span></div>'
+    + '<div class="sub">生成 ' + fmtInt(m.gen) + ' 次 · 发布 ' + fmtInt(m.pub) + ' 条</div>'
+    + rankBar(m.total / max) + '</div>'
+    + '<div class="num">' + fmtInt(m.total) + '<small> 次</small></div></li>').join('') + '</ul>';
+}
+
+function renderFlow(evts) {
+  const list = evts.slice().sort((a, b) => evTime(b) - evTime(a)).slice(0, 20);
+  if (!list.length) return '<div class="empty-sm">该时间范围内没有活动记录</div>';
+  const NAME = { generate: '生成', publish: '发布', crawl: '抓取', eval: '评测' };
+  const BADGE = { generate: 'badge-brand', publish: 'badge-green', crawl: 'badge-orange', eval: 'badge-gray' };
+  return '<ul class="flow">' + list.map(e => {
+    const t = new Date(e.at);
+    const tm = isNaN(t) ? '—' : pad2(t.getMonth() + 1) + '/' + pad2(t.getDate()) + ' ' + pad2(t.getHours()) + ':' + pad2(t.getMinutes());
+    let title = '', sub = '';
+    if (e.type === 'generate') {
+      title = e.newsTitle || '(未记录热点)';
+      sub = '生成 ' + fmtInt(e.ok) + '/' + fmtInt(e.versions) + ' 个版本 · ' + fmtMs(e.ms)
+        + ' · ↑' + fmtInt(e.promptTokens) + ' ↓' + fmtInt(e.completionTokens) + ' tokens'
+        + (e.model ? ' · ' + e.model : '') + (e.tone ? ' · ' + e.tone : '');
+    } else if (e.type === 'publish') {
+      title = e.newsTitle || '(未记录热点)';
+      sub = (e.version || '未知版本') + ' · ' + fmtInt(e.chars) + ' 字'
+        + (Array.isArray(e.productNames) && e.productNames.length ? ' · ' + e.productNames.length + ' 件商品' : '')
+        + (e.model ? ' · ' + e.model : '');
+    } else if (e.type === 'crawl') {
+      const okN = (e.sources || []).filter(s => s.ok).length;
+      title = '抓取热榜 ' + fmtInt(e.total) + ' 条';
+      sub = okN + '/' + (e.sources || []).length + ' 个源可用'
+        + (e.riskCount ? ' · 风险拦截 ' + fmtInt(e.riskCount) + ' 条' : '')
+        + ((e.topTitles || []).length ? ' · 榜首「' + e.topTitles[0] + '」' : '');
+    } else {
+      title = '评测运行';
+      sub = JSON.stringify(e).slice(0, 90);
+    }
+    return '<li class="t-' + esc(e.type) + '"><div class="ln1"><span class="tm">' + esc(tm) + '</span>'
+      + '<span class="badge ' + (BADGE[e.type] || 'badge-gray') + '">' + esc(NAME[e.type] || e.type) + '</span>'
+      + '<span class="tx" title="' + attr(title) + '">' + esc(title) + '</span></div>'
+      + '<div class="ln2">' + esc(sub) + '</div></li>';
+  }).join('') + '</ul>';
+}
+
+function renderSrcHealth() {
+  /* 优先取最近一次 crawl 事件;没有则回落到实时探测结果 */
+  const crawls = S.events.filter(e => e.type === 'crawl').sort((a, b) => evTime(b) - evTime(a));
+  let sources = null, at = null, from = '';
+  if (crawls.length) { sources = crawls[0].sources || []; at = crawls[0].at; from = '最近一次抓取事件'; }
+  else if (S.live && Array.isArray(S.live.sources)) { sources = S.live.sources; at = S.live.at; from = '实时探测结果'; }
+
+  $('#crawlSub').textContent = sources
+    ? from + ' · ' + fmtTime(at)
+    : (S.liveLoading ? '正在实时探测…' : '尚无抓取记录');
+
+  if (S.liveLoading && !sources) return '<div class="empty-sm"><span class="spin"></span> 正在调用 /api/news 实时探测抓取源…</div>';
+  if (!sources || !sources.length) {
+    return '<div class="empty-sm">还没有抓取记录。' + (S.liveError ? '实时探测失败:' + esc(S.liveError) + '。' : '')
+      + '到工作台点一次「立即抓取」,或点右上角「实时探测」。</div>';
+  }
+  const rows = sources.map(s =>
+    '<tr><td>' + esc(s.name || s.id || '未命名源') + '</td>'
+    + '<td>' + (s.ok ? '<span class="badge badge-green">✓ 正常</span>' : '<span class="badge badge-red">✗ 失败</span>') + '</td>'
+    + '<td class="num">' + (s.ok ? fmtInt(s.count) + ' 条' : '—') + '</td>'
+    + '<td class="num">' + (s.ms ? fmtMs(s.ms) : '—') + '</td></tr>'
+    + (s.ok || !s.error ? '' : '<tr><td colspan="4" style="font-size:11px;color:var(--red)">' + esc(String(s.error).slice(0, 120)) + '</td></tr>')
+  ).join('');
+  const okN = sources.filter(s => s.ok).length;
+  const live = S.live && Array.isArray(S.live.items)
+    ? '<div class="hint" style="margin-top:10px">实时热榜快照:' + fmtInt(S.live.items.length) + ' 条'
+      + (S.live.riskCount ? ',其中 <b style="color:var(--orange)">' + fmtInt(S.live.riskCount) + '</b> 条禁止借势' : '')
+      + (S.live.items[0] ? ' · 榜首「' + esc(S.live.items[0].title) + '」' : '') + '</div>'
+    : '';
+  return '<table class="tb"><thead><tr><th>抓取源</th><th>状态</th><th class="num">条数</th><th class="num">耗时</th></tr></thead>'
+    + '<tbody>' + rows + '</tbody></table>'
+    + '<div class="hint">' + okN + '/' + sources.length + ' 个源可用。'
+    + (S.liveLoading ? ' <span class="spin"></span> 实时探测中…' : '')
+    + (S.liveError ? ' 实时探测失败:' + esc(S.liveError) : '') + '</div>' + live;
+}
+
+/* =====================================================================
+ * 系统状态
+ * ===================================================================== */
+function sysItem(k, v, s, cls) {
+  return '<div class="sys-item"><div class="k">' + k + '</div>'
+    + '<div class="v"' + (cls ? ' style="color:' + cls + '"' : '') + '>' + v + '</div>'
+    + '<div class="s">' + s + '</div></div>';
+}
+function renderSys() {
+  const c = S.config || {};
+  const pSrc = { server: '服务端 prompts.json', local: '浏览器 localStorage', default: '内置默认值' }[PromptStore.source] || '内置默认值';
+  const prodSrc = { server: '服务端 products.json', local: '浏览器 localStorage', default: 'data.js 内置' }[S.productSource] || '未知';
+  const mock = LlmStore.cfg.mode === 'mock';
+  const scored = S.runs.filter(r => r.summary && r.summary.avgScore != null);
+  const last = scored.length ? scored[0] : null;
+  $('#sysGrid').innerHTML = [
+    sysItem(' 当前模型', esc(LlmStore.label()), mock ? '离线模板生成,不消耗 token' : '接入方式来自本机 localStorage 配置',
+      mock ? 'var(--orange)' : 'var(--green)'),
+    sysItem('提示词来源', esc(pSrc),
+      PromptStore.data.updatedAt ? '上次保存 ' + fmtTime(PromptStore.data.updatedAt) : '尚未保存过'),
+    sysItem('商品库', fmtInt(S.products.length) + ' 件', '来源:' + esc(prodSrc)),
+    sysItem(' 服务端密钥', c.hasServerKey ? '已配置 ✓' : '未配置',
+      c.hasServerKey ? '默认模型 ' + esc(c.defaultModel || '—') : '在 .env 写 DEEPSEEK_API_KEY 后重启服务',
+      c.hasServerKey ? 'var(--green)' : 'var(--orange)'),
+    sysItem(' 事件总数', fmtInt(S.total) + ' 条',
+      '本页已载入最近 ' + fmtInt(S.events.length) + ' 条 · events.jsonl'),
+    sysItem('评测记录', fmtInt(S.runs.length) + ' 次',
+      last ? '最近一次总分 ' + Number(last.summary.avgScore).toFixed(1) + ' · ' + fmtTime(last.savedAt) : '尚未跑过评测'),
+  ].join('');
+}
+
+/* =====================================================================
+ * 主渲染
+ * ===================================================================== */
+function renderAll() {
+  if (!S.serverOk || !S.events.length) {
+    $('#rangeMeta').textContent = S.serverOk ? '暂无运行事件' : '离线';
+  }
+  if (!S.serverOk) {
+    $('#dashBody').style.display = 'none';
+    $('#offlineBox').style.display = '';
+    $('#offlineBox').innerHTML = '<div class="card"><div class="card-body"><div class="empty-box">'
+      + '<div class="em"></div><div class="t">未连接本地服务,看板无数据</div>'
+      + '<div class="d">看板的全部指标来自本地服务写入的运行事件文件 <code>events.jsonl</code>。'
+      + '直接用 <code>file://</code> 打开页面时读不到接口,请先在项目目录启动服务后,'
+      + '改用 <code>http://localhost:8787/dashboard.html</code> 访问。</div>'
+      + '<div style="font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);'
+      + 'border-radius:10px;padding:12px 14px;display:inline-block;text-align:left;line-height:1.9">'
+      + 'cd hotspot-workbench<br>node server.js<br><span style="color:var(--ink-3)"># 端口被占用时:PORT=8899 node server.js</span></div>'
+      + '<div style="margin-top:18px"><button class="btn btn-primary btn-sm" onclick="refresh()">重试连接</button></div>'
+      + '</div></div></div>';
+    return;
+  }
+  $('#offlineBox').style.display = 'none';
+
+  if (!S.events.length) {
+    $('#dashBody').style.display = 'none';
+    $('#offlineBox').style.display = '';
+    $('#offlineBox').innerHTML = '<div class="card"><div class="card-body"><div class="empty-box">'
+      + '<div class="em"></div><div class="t">还没有任何运行数据</div>'
+      + '<div class="d">看板统计的是工作台的真实运行事件。去工作台走一遍「抓热点 → 选商品 → 生成文案 → 发布」,'
+      + '生成几条文案后回来,这里就会出现生成量、token 成本、商品排行与趋势图。</div>'
+      + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
+      + '<a class="btn btn-primary btn-sm" href="index.html">→ 去工作台生成文案</a>'
+      + '<a class="btn btn-ghost btn-sm" href="admin.html">配置提示词与模型</a>'
+      + '<button class="btn btn-ghost btn-sm" onclick="refresh()">刷新</button>'
+      + '</div></div></div></div>';
+    renderSys();
+    return;
+  }
+
+  $('#dashBody').style.display = '';
+  const r = rangeOf(S.range);
+  const evts = filterRange(S.events, r);
+
+  renderKpi();
+
+  /* --- 趋势图 --- */
+  const bk = bucketsFor(S.range);
+  const bs = fillBuckets(bk);
+  $('#trendSub').textContent = '按' + bk.unit + '统计 · 共 ' + bs.length + ' 个数据点(' + r.label + ')';
+  $('#chTrend').innerHTML = chartTrend(bs, bk.unit);
+  $('#chToken').innerHTML = chartToken(bs);
+
+  /* --- 版本风格分布(发布事件) --- */
+  const vmap = {};
+  evts.filter(e => e.type === 'publish').forEach(e => {
+    const k = e.version || '未记录版本';
+    vmap[k] = (vmap[k] || 0) + 1;
+  });
+  const vlist = Object.keys(vmap).sort((a, b) => vmap[b] - vmap[a])
+    .map((k, i) => ({ label: k, value: vmap[k], color: PALETTE[i % PALETTE.length] }));
+  $('#chVersion').innerHTML = chartDonut(vlist, '条已发布');
+
+  /* --- 语调分布(生成事件) --- */
+  const tmap = {};
+  evts.filter(e => e.type === 'generate').forEach(e => {
+    const k = e.tone || '未记录语调';
+    tmap[k] = (tmap[k] || 0) + 1;
+  });
+  const tlist = Object.keys(tmap).sort((a, b) => tmap[b] - tmap[a])
+    .map((k, i) => ({ label: k, value: tmap[k], color: PALETTE[i % PALETTE.length] }));
+  $('#chTone').innerHTML = chartHBar(tlist, '次生成');
+
+  /* --- 评测总分趋势 --- */
+  const runs = S.runs
+    .filter(x => x.summary && x.summary.avgScore != null)
+    .filter(x => { const t = new Date(x.savedAt).getTime(); return isNaN(t) ? false : (t >= r.from && t < r.to); })
+    .sort((a, b) => new Date(a.savedAt) - new Date(b.savedAt));
+  /* 同一天内的多次运行改用「时:分」做横轴标签,避免全是重复日期 */
+  const runDays = {};
+  runs.forEach(x => { runDays[new Date(x.savedAt).toDateString()] = 1; });
+  const sameDay = Object.keys(runDays).length <= 1;
+  const runPoints = runs
+    .map(x => {
+      const d = new Date(x.savedAt);
+      const m = x.meta || {};
+      return {
+        score: Number(x.summary.avgScore) || 0,
+        rule: x.summary.avgRule == null ? null : Number(x.summary.avgRule),
+        judge: x.summary.avgJudge == null ? null : Number(x.summary.avgJudge),
+        done: x.summary.done || 0,
+        totalTasks: x.summary.total || 0,
+        model: m.model || '未知模型',
+        hash: m.promptHash || '',
+        label: sameDay ? pad2(d.getHours()) + ':' + pad2(d.getMinutes())
+          : pad2(d.getMonth() + 1) + '/' + pad2(d.getDate()),
+        full: fmtTime(x.savedAt),
+      };
+    });
+  $('#chScore').innerHTML = chartScore(runPoints);
+
+  /* --- 排行与明细 --- */
+  $('#rankProd').innerHTML = renderProdRank(evts);
+  $('#rankSrc').innerHTML = renderSrcRank(evts);
+  $('#flowList').innerHTML = renderFlow(evts);
+  $('#srcHealth').innerHTML = renderSrcHealth();
+
+  renderSys();
+}
+
+/* =====================================================================
+ * 数据加载
+ * ===================================================================== */
+async function loadEvents() {
+  try {
+    const res = await fetch('/api/events?limit=2000', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    S.events = (Array.isArray(j.events) ? j.events : []).filter(e => e && e.type);
+    S.total = Number(j.total) || S.events.length;
+    S.serverOk = true;
+  } catch (e) {
+    S.events = []; S.total = 0; S.serverOk = false;
+  }
+}
+async function loadRuns() {
+  try { const l = await RunStore.list(); S.runs = Array.isArray(l) ? l : []; }
+  catch (e) { S.runs = []; }
+}
+async function loadCfg() {
+  try {
+    const res = await fetch('/api/config', { cache: 'no-store' });
+    S.config = res.ok ? await res.json() : null;
+  } catch (e) { S.config = null; }
+}
+async function loadProdList() {
+  try { const r = await loadProducts(); S.products = r.products || []; S.productSource = r.source || 'default'; }
+  catch (e) { S.products = typeof PRODUCTS !== 'undefined' ? PRODUCTS : []; S.productSource = 'default'; }
+}
+
+/** 实时探测抓取源(会触发服务端真实抓取,因此只在页面加载时自动调用一次) */
+async function probeLive(silent) {
+  if (S.liveLoading) return;
+  S.liveLoading = true; S.liveError = '';
+  const btn = $('#liveBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 探测中'; }
+  if (S.serverOk && S.events.length) $('#srcHealth').innerHTML = renderSrcHealth();
+  try {
+    const res = await fetch('/api/news', { cache: 'no-store' });
+    const j = await res.json();
+    if (!res.ok) throw new Error((j.error && j.error.message) || 'HTTP ' + res.status);
+    S.live = j;
+    if (!silent) toast('实时探测完成:' + (j.items || []).length + ' 条热点', true);
+  } catch (e) {
+    S.liveError = e.message || '请求失败';
+    if (!silent) toast('实时探测失败:' + S.liveError);
+  } finally {
+    S.liveLoading = false;
+    if (btn) { btn.disabled = false; btn.textContent = '实时探测'; }
+    if (S.serverOk && S.events.length) $('#srcHealth').innerHTML = renderSrcHealth();
+  }
+}
+
+async function refresh(silent) {
+  const btn = $('#refreshBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 刷新中';
+  try {
+    await Promise.all([loadEvents(), loadRuns(), loadCfg(), loadProdList()]);
+    S.lastRefresh = new Date();
+    $('#lastRefresh').textContent = '最后刷新 ' + S.lastRefresh.toLocaleTimeString('zh-CN', { hour12: false });
+    paintBadge();
+    renderAll();
+    if (!silent) toast('数据已刷新', true);
+  } catch (e) {
+    if (!silent) toast('刷新失败:' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '刷新';
+  }
+}
+
+function paintBadge() {
+  const b = $('#srcBadge');
+  if (!S.serverOk) { b.className = 'src-badge bad'; b.textContent = '✗ 未连接本地服务'; return; }
+  b.className = 'src-badge server';
+  b.textContent = '✓ 已连接 · ' + fmtInt(S.total) + ' 条事件';
+}
+
+/* =====================================================================
+ * 交互
+ * ===================================================================== */
+function pickRange(k) {
+  S.range = k;
+  document.querySelectorAll('#rangeSeg button').forEach(b => b.classList.toggle('on', b.dataset.r === k));
+  renderAll();
+}
+function toggleAuto(on) {
+  clearInterval(S.autoTimer); S.autoTimer = null;
+  if (on) {
+    S.autoTimer = setInterval(() => refresh(true), 30000);
+    toast('已开启自动刷新(每 30 秒)', true);
+  } else {
+    toast('已关闭自动刷新');
+  }
+}
+function onPrice() {
+  const pi = Number($('#priceIn').value), po = Number($('#priceOut').value);
+  S.priceIn = isFinite(pi) && pi >= 0 ? pi : 0;
+  S.priceOut = isFinite(po) && po >= 0 ? po : 0;
+  try { localStorage.setItem(PRICE_LS, JSON.stringify({ priceIn: S.priceIn, priceOut: S.priceOut })); } catch (e) { /* ignore */ }
+  renderAll();
+}
+function loadPrice() {
+  try {
+    const s = JSON.parse(localStorage.getItem(PRICE_LS) || 'null');
+    if (s && isFinite(s.priceIn)) S.priceIn = Number(s.priceIn);
+    if (s && isFinite(s.priceOut)) S.priceOut = Number(s.priceOut);
+  } catch (e) { /* ignore */ }
+  $('#priceIn').value = S.priceIn;
+  $('#priceOut').value = S.priceOut;
+}
+
+function exportJson() {
+  const r = rangeOf(S.range);
+  const evts = filterRange(S.events, r);
+  const m = metrics(evts);
+  const prev = r.prevLabel ? metrics(S.events.filter(e => inWindow(e, r.prevFrom, r.prevTo))) : null;
+  const bs = fillBuckets(bucketsFor(S.range));
+  const countBy = (list, keyFn) => {
+    const o = {};
+    list.forEach(e => { const k = keyFn(e); if (k) o[k] = (o[k] || 0) + 1; });
+    return o;
+  };
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    range: { key: S.range, label: r.label, from: isFinite(r.from) ? new Date(r.from).toISOString() : null },
+    price: { unit: '元 / 百万 token', input: S.priceIn, output: S.priceOut, note: '参考价,以服务商官网为准' },
+    kpi: m,
+    prevKpi: prev,
+    trend: bs.map(b => ({ label: b.label, generate: b.gen, publish: b.pub, crawled: b.crawl, tokensIn: b.tin, tokensOut: b.tout })),
+    versionMix: countBy(evts.filter(e => e.type === 'publish'), e => e.version || '未记录版本'),
+    toneMix: countBy(evts.filter(e => e.type === 'generate'), e => e.tone || '未记录语调'),
+    newsSourceMix: countBy(evts.filter(e => e.type === 'generate' || e.type === 'publish'),
+      e => e.live ? (e.newsSource || '未知来源') : '内置演示'),
+    evalRuns: S.runs.filter(x => x.summary && x.summary.avgScore != null)
+      .map(x => ({ id: x.id, savedAt: x.savedAt, avgScore: x.summary.avgScore, avgRule: x.summary.avgRule, avgJudge: x.summary.avgJudge, meta: x.meta })),
+    system: {
+      model: LlmStore.label(),
+      promptSource: PromptStore.source,
+      products: S.products.length,
+      productSource: S.productSource,
+      hasServerKey: !!(S.config && S.config.hasServerKey),
+      totalEvents: S.total,
+    },
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const d = new Date();
+  a.download = 'hotspot-dashboard-' + S.range + '-'
+    + d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('已导出当前统计 JSON', true);
+}
+
+/* ---------- 图表 tooltip ---------- */
+document.addEventListener('mousemove', e => {
+  const tip = $('#chartTip');
+  const el = (e.target && e.target.closest) ? e.target.closest('[data-tip]') : null;
+  if (!el) { tip.classList.remove('show'); return; }
+  if (tip._src !== el) { tip.innerHTML = el.getAttribute('data-tip'); tip._src = el; }
+  tip.classList.add('show');
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + 15, y = e.clientY + 15;
+  if (x + w > window.innerWidth - 8) x = e.clientX - w - 15;
+  if (y + h > window.innerHeight - 8) y = e.clientY - h - 15;
+  tip.style.left = Math.max(6, x) + 'px';
+  tip.style.top = Math.max(6, y) + 'px';
+});
+document.addEventListener('mouseleave', () => $('#chartTip').classList.remove('show'));
+
+/* ---------- 侧栏锚点高亮 ---------- */
+$('.main').addEventListener('scroll', () => {
+  const box = $('.main');
+  const secs = [].slice.call(document.querySelectorAll('[data-sec][id]')).filter(s => s.offsetParent);
+  if (!secs.length) return;
+  const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 8;
+  const top = box.scrollTop + 130;
+  let cur = secs[0].id;
+  if (atBottom) cur = secs[secs.length - 1].id;
+  else secs.forEach(s => { if (s.offsetTop <= top) cur = s.id; });
+  document.querySelectorAll('.sidebar a[href^="#"]').forEach(a =>
+    a.classList.toggle('on', a.getAttribute('href') === '#' + cur));
+});
+
+/* =====================================================================
+ * 启动
+ * ===================================================================== */
+(async function init() {
+  loadPrice();
+  LlmStore.load();
+  await LlmStore.probeServer();
+  await PromptStore.load();
+  await refresh(true);
+  /* /api/news 会触发服务端真实抓取,整个页面生命周期内只自动调用这一次 */
+  if (S.serverOk) probeLive(true);
+})();
+</script>
+</body>
+</html>
