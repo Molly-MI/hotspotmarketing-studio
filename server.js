@@ -21,11 +21,13 @@ const newsCrawler = require('./news.js');
 
 const ROOT = __dirname;
 const PORT = Number(process.env.PORT || 8787);
-const PROMPT_FILE = path.join(ROOT, 'prompts.json');
-const PRODUCT_FILE = path.join(ROOT, 'products.json');
-const DATASET_FILE = path.join(ROOT, 'datasets.json');
-const SOURCE_FILE = path.join(ROOT, 'sources.json');
-const EVAL_DIR = path.join(ROOT, 'evals');
+// 在 Docker 中把 DATA_DIR 指向持久卷；本地未设置时仍保持原来的项目目录行为。
+const DATA_DIR = process.env.DATA_DIR || ROOT;
+const PROMPT_FILE = path.join(DATA_DIR, 'prompts.json');
+const PRODUCT_FILE = path.join(DATA_DIR, 'products.json');
+const DATASET_FILE = path.join(DATA_DIR, 'datasets.json');
+const SOURCE_FILE = path.join(DATA_DIR, 'sources.json');
+const EVAL_DIR = path.join(DATA_DIR, 'evals');
 
 /* ---------- 极简 .env 加载(仅本地开发使用) ---------- */
 (function loadEnv() {
@@ -236,7 +238,7 @@ async function handleEvalRuns(req, res, query) {
  * 工作台每次「生成文案」「发布」都会 POST 一条事件,按行追加到 events.jsonl。
  * 看板据此统计真实的生成量、发布量、耗时、token 与成本。
  * ------------------------------------------------------------------- */
-const EVENT_FILE = path.join(ROOT, 'events.jsonl');
+const EVENT_FILE = path.join(DATA_DIR, 'events.jsonl');
 const EVENT_TYPES = ['generate', 'publish', 'crawl', 'eval'];
 
 async function handleEvents(req, res, query) {
@@ -322,7 +324,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(405); res.end();
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, process.env.HOST || '127.0.0.1', () => {
   console.log('');
   console.log('  热点营销工作台   http://localhost:' + PORT);
   console.log('  后台管理         http://localhost:' + PORT + '/admin.html');

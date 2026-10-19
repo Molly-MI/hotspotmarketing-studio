@@ -1,0 +1,10 @@
+.git
+.env
+.sites-release.zip
+*.jsonl
+prompts.json
+products.json
+datasets.json
+sources.json
+evals
+node_modules
