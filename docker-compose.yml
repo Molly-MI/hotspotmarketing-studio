@@ -14,12 +14,20 @@ services:
     expose:
       - "8787"
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
+  caddy:
+    image: caddy:2-alpine
     restart: unless-stopped
     depends_on:
       - app
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
 
 volumes:
   hotspot-data:
+  caddy-data:
+  caddy-config:
