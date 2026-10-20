@@ -1,33 +1,13 @@
 services:
-  app:
-    build: .
-    restart: unless-stopped
-    environment:
-      HOST: 0.0.0.0
-      PORT: 8787
-      DATA_DIR: /data
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com/v1}
-      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
-    volumes:
-      - hotspot-data:/data
-    expose:
-      - "8787"
-
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    depends_on:
-      - app
-    ports:
-      - "80:80"
-      - "443:443"
+    network_mode: host
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
 
 volumes:
-  hotspot-data:
   caddy-data:
   caddy-config:

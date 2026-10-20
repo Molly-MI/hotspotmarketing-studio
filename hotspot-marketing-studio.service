@@ -1,0 +1,20 @@
+[Unit]
+Description=Hotspot Marketing Studio
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=admin
+WorkingDirectory=/home/admin/apps/hotspotmarketing-studio
+Environment=NODE_ENV=production
+Environment=DATA_DIR=/home/admin/apps/hotspotmarketing-studio/data
+EnvironmentFile=/home/admin/apps/hotspotmarketing-studio/.env
+ExecStart=/usr/bin/node /home/admin/apps/hotspotmarketing-studio/server.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
