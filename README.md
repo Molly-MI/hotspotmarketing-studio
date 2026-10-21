@@ -34,9 +34,9 @@ node server.js
 ### 一次性准备
 
 1. 在 Cloudflare 控制台依次打开 **存储和数据库 → KV → 创建命名空间**，创建 `hotspot-marketing-studio`。
-2. 复制该命名空间的 ID，替换 [`wrangler.jsonc`](wrangler.jsonc) 里的 `REPLACE_WITH_YOUR_KV_NAMESPACE_ID`，然后提交该修改。不要填写 KV 名称，必须是 Namespace ID。
-3. 将仓库导入 Cloudflare 的 **Workers 和 Pages**，按 Worker 项目部署。仓库已有 `wrangler.jsonc`、入口 `worker/worker.mjs` 和静态目录 `dist/`；如果控制台要求填写部署命令，使用 `npx wrangler deploy`，无需构建命令。
-4. 首次部署成功后，进入该 Worker 的 **设置 → 变量和机密**，新建加密变量 `DEEPSEEK_API_KEY`。也可选填 `LLM_BASE_URL`、`LLM_MODEL`。密钥只在 Worker 运行环境中读取，`/api/config` 只会返回是否存在密钥。
+2. 将仓库导入 Cloudflare 的 **Workers 和 Pages**，按 Worker 项目部署。仓库已有 `wrangler.jsonc`、入口 `worker/worker.mjs` 和静态目录 `dist/`；如果控制台要求填写部署命令，使用 `npx wrangler deploy`，无需构建命令。
+3. 首次部署成功后，进入该 Worker 的 **设置 → 绑定 → 添加 → KV 命名空间**，将绑定变量名填为 `HOTSPOT_STORE`，并选择 `hotspot-marketing-studio`。新版控制台不再需要手动复制 Namespace ID。
+4. 在 Worker 的 **设置 → 变量和机密**，新建加密变量 `DEEPSEEK_API_KEY`。也可选填 `LLM_BASE_URL`、`LLM_MODEL`。密钥只在 Worker 运行环境中读取，`/api/config` 只会返回是否存在密钥。
 5. 在 Worker 的 **设置 → 域和路由** 添加自定义域名 `hotspot.hielise.tech`。该名称当前若仍存在指向旧阿里云服务器的 `A` 记录，先删除该旧记录，再让 Cloudflare 为 Worker 创建自定义域名路由；否则请求仍可能被送到旧源站。
 
 部署完成后，用下列地址验收：

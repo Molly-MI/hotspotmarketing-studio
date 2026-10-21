@@ -7,11 +7,5 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
-  },
-  "kv_namespaces": [
-    {
-      "binding": "HOTSPOT_STORE",
-      "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
-    }
-  ]
+  }
 }
