@@ -1,5 +1,6 @@
 const USER_AGENT = 'HotspotMarketingStudio/1.0 (+https://hotspot.hielise.tech)';
 const DEFAULT_TTL = 60_000;
+const FETCH_TIMEOUT = 9_000;
 const DUP_THRESHOLD = 0.55;
 
 export const BUILTIN_SOURCES = [
@@ -98,13 +99,21 @@ function titleSimilarity(left, right) {
 }
 
 async function fetchText(url, fetchImpl) {
-  const response = await fetchImpl(url, {
-    headers: {
-      accept: 'application/json, text/html, application/xml, text/xml, */*',
-      'accept-language': 'zh-CN,zh;q=0.9',
-      'user-agent': USER_AGENT,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort('请求超时'), FETCH_TIMEOUT);
+  let response;
+  try {
+    response = await fetchImpl(url, {
+      headers: {
+        accept: 'application/json, text/html, application/xml, text/xml, */*',
+        'accept-language': 'zh-CN,zh;q=0.9',
+        'user-agent': USER_AGENT,
+      },
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.text();
 }

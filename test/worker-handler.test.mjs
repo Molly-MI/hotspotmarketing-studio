@@ -71,6 +71,15 @@ test('rejects an empty product list instead of overwriting stored products', asy
   assert.deepEqual(await response.json(), { error: { message: '缺少 products 数组,拒绝写入' } });
 });
 
+test('returns built-in news sources until an administrator saves a custom source list', async () => {
+  const response = await handleApi(new Request('https://example.test/api/news/sources'), apiEnv());
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.builtin, true);
+  assert.equal(payload.sources.some(source => source.id === 'weibo'), true);
+});
+
 test('keeps only the newest 5000 events in persistent storage', async () => {
   const kv = memoryKv();
   const store = createStore(kv);

@@ -179,4 +179,3 @@ export async function handleApi(request, env, deps = {}) {
 
   return jsonResponse(404, { error: { message: 'API 不存在' } });
 }
-
