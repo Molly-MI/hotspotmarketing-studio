@@ -133,6 +133,18 @@ test('streams the upstream SSE response through the LLM endpoint', async () => {
   assert.equal(upstreamRequest.headers.get('authorization'), 'Bearer sk-worker-secret');
 });
 
+test('returns a controlled JSON error when the LLM upstream cannot be reached', async () => {
+  const response = await handleApi(new Request('https://example.test/api/llm', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: '你好' }] }),
+  }), { ...apiEnv(), DEEPSEEK_API_KEY: 'sk-worker-secret' }, {
+    fetch: async () => { throw new Error('network unavailable'); },
+  });
+
+  assert.equal(response.status, 502);
+  assert.equal((await response.json()).error.message.includes('network unavailable'), true);
+});
+
 test('crawls an RSS source and marks unsafe marketing topics as blocked', async () => {
   const result = await crawlNews([{ id: 'rss-test', name: '测试 RSS', type: 'rss', enabled: true, url: 'https://feed.test/rss' }], {
     force: true,

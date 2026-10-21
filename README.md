@@ -27,6 +27,33 @@ node server.js
 
 > DeepSeek 密钥在 https://platform.deepseek.com/api_keys 创建。任何 OpenAI 兼容接口(Kimi、通义千问、vLLM、Ollama)都可以在「模型设置」里换 Base URL 直接用。
 
+## 无服务器部署：Cloudflare Worker + KV
+
+这一方式不需要保留 VPS、Nginx、Docker、HTTPS 证书或 SSH。静态页面由 Worker 的 Assets 提供，`/api/*` 在 Cloudflare Worker 中运行；提示词、商品、数据集、抓取源、评测记录和运行事件存入 Cloudflare KV。
+
+### 一次性准备
+
+1. 在 Cloudflare 控制台依次打开 **存储和数据库 → KV → 创建命名空间**，创建 `hotspot-marketing-studio`。
+2. 复制该命名空间的 ID，替换 [`wrangler.jsonc`](wrangler.jsonc) 里的 `REPLACE_WITH_YOUR_KV_NAMESPACE_ID`，然后提交该修改。不要填写 KV 名称，必须是 Namespace ID。
+3. 将仓库导入 Cloudflare 的 **Workers 和 Pages**，按 Worker 项目部署。仓库已有 `wrangler.jsonc`、入口 `worker/worker.mjs` 和静态目录 `dist/`；如果控制台要求填写部署命令，使用 `npx wrangler deploy`，无需构建命令。
+4. 首次部署成功后，进入该 Worker 的 **设置 → 变量和机密**，新建加密变量 `DEEPSEEK_API_KEY`。也可选填 `LLM_BASE_URL`、`LLM_MODEL`。密钥只在 Worker 运行环境中读取，`/api/config` 只会返回是否存在密钥。
+5. 在 Worker 的 **设置 → 域和路由** 添加自定义域名 `hotspot.hielise.tech`。该名称当前若仍存在指向旧阿里云服务器的 `A` 记录，先删除该旧记录，再让 Cloudflare 为 Worker 创建自定义域名路由；否则请求仍可能被送到旧源站。
+
+部署完成后，用下列地址验收：
+
+```text
+https://hotspot.hielise.tech/
+https://hotspot.hielise.tech/api/config
+```
+
+第二个地址应返回 JSON，且 `hasServerKey` 为 `true`（已经配置 `DEEPSEEK_API_KEY` 时）。如果是 `false`，页面仍可演示，但不能在不输入浏览器临时 Key 的情况下调用模型。
+
+### 运行边界
+
+- KV 是最终一致存储，适合当前单管理员的配置和轻量事件记录；不是事务数据库。
+- 新闻抓取仍依赖目标站点的公开响应。单个源失败会在 `/api/news` 的 `sources` 字段中报告，不会让整个页面失效。
+- Node `server.js` 保留为本地开发/离线演示入口，但公开生产流量不再经过它。
+
 ## 页面一览
 
 | 页面 | 地址 | 作用 |
