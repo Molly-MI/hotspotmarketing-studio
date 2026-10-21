@@ -1,4 +1,5 @@
 import { createStore } from './storage.mjs';
+import { BUILTIN_SOURCES, crawlNews } from './news.mjs';
 
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8',
@@ -108,6 +109,15 @@ export async function handleApi(request, env, deps = {}) {
 
   if (url.pathname === '/api/llm') return proxyLlm(request, env, fetchImpl);
 
+  if (url.pathname === '/api/news') {
+    if (request.method !== 'GET') return methodNotAllowed();
+    const store = env.HOTSPOT_STORE ? createStore(env.HOTSPOT_STORE) : null;
+    if (!store) return jsonResponse(503, { error: { message: 'KV 存储尚未绑定' } });
+    const saved = await store.getJson('sources', null);
+    const sources = Array.isArray(saved?.sources) && saved.sources.length ? saved.sources : BUILTIN_SOURCES;
+    return jsonResponse(200, await crawlNews(sources, { force: url.searchParams.get('force') === '1', fetch: fetchImpl }));
+  }
+
   const storedRoutes = new Set([
     '/api/prompts', '/api/products', '/api/datasets', '/api/news/sources', '/api/eval-runs', '/api/events',
   ]);
@@ -129,6 +139,10 @@ export async function handleApi(request, env, deps = {}) {
       !data || (!Array.isArray(data.cases) && !Array.isArray(data)) ? '缺少 cases 数组,拒绝写入' : null);
   }
   if (url.pathname === '/api/news/sources') {
+    if (request.method === 'GET') {
+      const saved = await store.getJson('sources', null);
+      return jsonResponse(200, Array.isArray(saved?.sources) ? saved : { sources: BUILTIN_SOURCES, builtin: true });
+    }
     return jsonStoreRoute(request, store, 'sources', data =>
       !Array.isArray(data?.sources) ? '缺少 sources 数组,拒绝写入' : null);
   }

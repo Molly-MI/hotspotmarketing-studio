@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import worker from '../worker/worker.mjs';
 import { handleApi } from '../worker/src/handler.mjs';
+import { crawlNews } from '../worker/src/news.mjs';
 import { createStore } from '../worker/src/storage.mjs';
 
 const env = {
@@ -130,4 +131,36 @@ test('streams the upstream SSE response through the LLM endpoint', async () => {
   assert.equal(response.headers.get('content-type'), 'text/event-stream; charset=utf-8');
   assert.equal(await response.text(), 'data: {"choices":[]}\n\ndata: [DONE]\n\n');
   assert.equal(upstreamRequest.headers.get('authorization'), 'Bearer sk-worker-secret');
+});
+
+test('crawls an RSS source and marks unsafe marketing topics as blocked', async () => {
+  const result = await crawlNews([{ id: 'rss-test', name: '测试 RSS', type: 'rss', enabled: true, url: 'https://feed.test/rss' }], {
+    force: true,
+    fetch: async () => new Response(`<?xml version="1.0"?><rss><channel>
+      <item><title>某地发生火灾事故</title><description>救援正在进行</description><link>https://news.test/fire</link><pubDate>Tue, 21 Oct 2026 00:00:00 GMT</pubDate></item>
+      <item><title>秋季新品发布</title><description>品牌推出新款产品</description><link>https://news.test/product</link></item>
+    </channel></rss>`, { status: 200 }),
+  });
+
+  assert.equal(result.sources[0].ok, true);
+  assert.equal(result.items.length, 2);
+  assert.equal(result.items[0].risk.level, 'block');
+  assert.equal(result.items[1].url, 'https://news.test/product');
+});
+
+test('uses custom RSS sources through the Worker news API', async () => {
+  const storeEnv = apiEnv();
+  await handleApi(new Request('https://example.test/api/news/sources', {
+    method: 'PUT', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ sources: [{ id: 'rss-test', name: '测试 RSS', type: 'rss', enabled: true, url: 'https://feed.test/rss' }] }),
+  }), storeEnv);
+
+  const response = await handleApi(new Request('https://example.test/api/news?force=1'), storeEnv, {
+    fetch: async () => new Response('<rss><channel><item><title>新品发布会</title><link>https://news.test/launch</link></item></channel></rss>'),
+  });
+  const payload = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.items[0].title, '新品发布会');
+  assert.equal(payload.items[0].url, 'https://news.test/launch');
 });
