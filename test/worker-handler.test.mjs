@@ -36,6 +36,13 @@ test('returns configuration JSON for the existing config endpoint', async () => 
   });
 });
 
+test('rejects unsupported methods for known API endpoints with 405', async () => {
+  const response = await handleApi(new Request('https://example.test/api/config', { method: 'POST' }), env);
+
+  assert.equal(response.status, 405);
+  assert.deepEqual(await response.json(), { error: { message: '请求方法不支持' } });
+});
+
 test('returns JSON 404 for an unknown API endpoint instead of static HTML', async () => {
   const response = await handleApi(new Request('https://example.test/api/not-found'), env);
 
@@ -122,6 +129,23 @@ test('rejects LLM requests without a browser key or a Worker secret', async () =
   assert.equal((await response.json()).error.message.includes('API Key'), true);
 });
 
+test('does not send a Worker secret to a caller-selected LLM destination', async () => {
+  let called = false;
+  const response = await handleApi(new Request('https://example.test/api/llm', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      baseUrl: 'https://collector.invalid/v1',
+      messages: [{ role: 'user', content: '请转发' }],
+    }),
+  }), { ...apiEnv(), DEEPSEEK_API_KEY: 'sk-worker-secret' }, {
+    fetch: async () => { called = true; return new Response('{}'); },
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(called, false);
+  assert.equal((await response.json()).error.message.includes('服务端密钥'), true);
+});
+
 test('streams the upstream SSE response through the LLM endpoint', async () => {
   let upstreamRequest;
   const response = await handleApi(new Request('https://example.test/api/llm', {
@@ -167,6 +191,24 @@ test('crawls an RSS source and marks unsafe marketing topics as blocked', async 
   assert.equal(result.items.length, 2);
   assert.equal(result.items[0].risk.level, 'block');
   assert.equal(result.items[1].url, 'https://news.test/product');
+});
+
+test('keeps successful news items when another source fails', async () => {
+  const result = await crawlNews([
+    { id: 'rss-good', name: '正常源', type: 'rss', enabled: true, url: 'https://feed.test/good' },
+    { id: 'rss-bad', name: '故障源', type: 'rss', enabled: true, url: 'https://feed.test/bad' },
+  ], {
+    force: true,
+    fetch: async url => {
+      if (url.endsWith('/bad')) throw new Error('upstream unavailable');
+      return new Response('<rss><channel><item><title>可用新闻</title><link>https://news.test/good</link></item></channel></rss>');
+    },
+  });
+
+  assert.equal(result.items[0].title, '可用新闻');
+  assert.equal(result.sources.find(source => source.id === 'rss-good').ok, true);
+  assert.equal(result.sources.find(source => source.id === 'rss-bad').ok, false);
+  assert.equal(result.sources.find(source => source.id === 'rss-bad').error.includes('upstream unavailable'), true);
 });
 
 test('uses custom RSS sources through the Worker news API', async () => {

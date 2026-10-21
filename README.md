@@ -52,6 +52,7 @@ https://hotspot.hielise.tech/api/config
 
 - KV 是最终一致存储，适合当前单管理员的配置和轻量事件记录；不是事务数据库。
 - 新闻抓取仍依赖目标站点的公开响应。单个源失败会在 `/api/news` 的 `sources` 字段中报告，不会让整个页面失效。
+- 当请求使用 Worker 的 `DEEPSEEK_API_KEY` 时，`baseUrl` 只能是 Worker 环境变量 `LLM_BASE_URL`（未设置时为 DeepSeek）。这防止外部请求把服务端密钥转发给任意地址；如要切换供应商，请同时更新 `LLM_BASE_URL` 与相应 Secret。
 - Node `server.js` 保留为本地开发/离线演示入口，但公开生产流量不再经过它。
 
 ## 页面一览

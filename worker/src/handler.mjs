@@ -40,15 +40,22 @@ async function proxyLlm(request, env, fetchImpl) {
     return jsonResponse(400, { error: { message: 'messages 不能为空' } });
   }
 
-  const apiKey = body.value.apiKey || env.DEEPSEEK_API_KEY || env.LLM_API_KEY;
+  const browserKey = body.value.apiKey;
+  const serverKey = env.DEEPSEEK_API_KEY || env.LLM_API_KEY;
+  const apiKey = browserKey || serverKey;
   if (!apiKey) return jsonResponse(400, { error: { message: '未配置 API Key' } });
 
-  let target;
+  let baseUrl;
   try {
-    target = `${normalizeBaseUrl(body.value.baseUrl || env.LLM_BASE_URL)}/chat/completions`;
+    baseUrl = normalizeBaseUrl(body.value.baseUrl || env.LLM_BASE_URL);
   } catch (error) {
     return jsonResponse(400, { error: { message: error.message } });
   }
+  const configuredBaseUrl = normalizeBaseUrl(env.LLM_BASE_URL);
+  if (!browserKey && baseUrl !== configuredBaseUrl) {
+    return jsonResponse(400, { error: { message: '使用服务端密钥时不得覆盖服务端 LLM 地址' } });
+  }
+  const target = `${baseUrl}/chat/completions`;
 
   const payload = {
     model: body.value.model || env.LLM_MODEL || 'deepseek-chat',
@@ -98,7 +105,8 @@ export async function handleApi(request, env, deps = {}) {
 
   const fetchImpl = deps.fetch || globalThis.fetch;
 
-  if (url.pathname === '/api/config' && request.method === 'GET') {
+  if (url.pathname === '/api/config') {
+    if (request.method !== 'GET') return methodNotAllowed();
     return jsonResponse(200, {
       hasServerKey: Boolean(env.DEEPSEEK_API_KEY || env.LLM_API_KEY),
       defaultBaseUrl: env.LLM_BASE_URL || 'https://api.deepseek.com/v1',
