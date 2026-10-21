@@ -1,3 +1,5 @@
+import { createStore } from './storage.mjs';
+
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
@@ -19,6 +21,65 @@ function methodNotAllowed() {
   return jsonResponse(405, { error: { message: '请求方法不支持' } });
 }
 
+function normalizeBaseUrl(value) {
+  const baseUrl = String(value || 'https://api.deepseek.com/v1').replace(/\/+$/, '');
+  const url = new URL(baseUrl);
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && url.hostname === 'localhost')) {
+    throw new Error('LLM 服务地址必须使用 HTTPS');
+  }
+  return baseUrl;
+}
+
+async function proxyLlm(request, env, fetchImpl) {
+  if (request.method !== 'POST') return methodNotAllowed();
+
+  const body = await requestJson(request);
+  if (body.error) return body.error;
+  if (!Array.isArray(body.value?.messages) || !body.value.messages.length) {
+    return jsonResponse(400, { error: { message: 'messages 不能为空' } });
+  }
+
+  const apiKey = body.value.apiKey || env.DEEPSEEK_API_KEY || env.LLM_API_KEY;
+  if (!apiKey) return jsonResponse(400, { error: { message: '未配置 API Key' } });
+
+  let target;
+  try {
+    target = `${normalizeBaseUrl(body.value.baseUrl || env.LLM_BASE_URL)}/chat/completions`;
+  } catch (error) {
+    return jsonResponse(400, { error: { message: error.message } });
+  }
+
+  const payload = {
+    model: body.value.model || env.LLM_MODEL || 'deepseek-chat',
+    messages: body.value.messages,
+    stream: Boolean(body.value.stream),
+  };
+  if (typeof body.value.temperature === 'number') payload.temperature = body.value.temperature;
+  if (typeof body.value.max_tokens === 'number') payload.max_tokens = body.value.max_tokens;
+
+  let upstream;
+  try {
+    upstream = await fetchImpl(new Request(target, {
+      method: 'POST',
+      headers: {
+        accept: payload.stream ? 'text/event-stream' : 'application/json',
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    }));
+  } catch (error) {
+    return jsonResponse(502, { error: { message: `转发到大模型失败：${error.message}` } });
+  }
+
+  const headers = new Headers({
+    'cache-control': 'no-store',
+    'content-type': upstream.headers.get('content-type') || 'application/json; charset=utf-8',
+    'x-accel-buffering': 'no',
+  });
+  return new Response(upstream.body, { status: upstream.status, headers });
+}
+
 async function jsonStoreRoute(request, store, key, validate) {
   if (request.method === 'GET') return jsonResponse(200, await store.getJson(key, {}));
   if (!['PUT', 'POST'].includes(request.method)) return methodNotAllowed();
@@ -30,9 +91,11 @@ async function jsonStoreRoute(request, store, key, validate) {
   return jsonResponse(200, { ok: true, ...(key === 'prompts' ? { updatedAt: body.value.updatedAt || null } : {}) });
 }
 
-export async function handleApi(request, env) {
+export async function handleApi(request, env, deps = {}) {
   const url = new URL(request.url);
   if (!url.pathname.startsWith('/api/')) return null;
+
+  const fetchImpl = deps.fetch || globalThis.fetch;
 
   if (url.pathname === '/api/config' && request.method === 'GET') {
     return jsonResponse(200, {
@@ -42,6 +105,8 @@ export async function handleApi(request, env) {
       liveNews: true,
     });
   }
+
+  if (url.pathname === '/api/llm') return proxyLlm(request, env, fetchImpl);
 
   const storedRoutes = new Set([
     '/api/prompts', '/api/products', '/api/datasets', '/api/news/sources', '/api/eval-runs', '/api/events',
@@ -100,5 +165,4 @@ export async function handleApi(request, env) {
 
   return jsonResponse(404, { error: { message: 'API 不存在' } });
 }
-import { createStore } from './storage.mjs';
 

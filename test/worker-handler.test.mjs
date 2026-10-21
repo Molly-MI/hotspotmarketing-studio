@@ -90,3 +90,44 @@ test('lists evaluation runs in descending savedAt order', async () => {
 
   assert.deepEqual((await store.listEvalRuns()).map(run => run.id), ['new', 'old']);
 });
+
+test('reports only the presence of a configured server key', async () => {
+  const response = await handleApi(new Request('https://example.test/api/config'), {
+    ...env,
+    DEEPSEEK_API_KEY: 'sk-this-must-never-reach-the-browser',
+  });
+  const payload = await response.json();
+
+  assert.equal(payload.hasServerKey, true);
+  assert.equal(JSON.stringify(payload).includes('sk-this-must-never-reach-the-browser'), false);
+});
+
+test('rejects LLM requests without a browser key or a Worker secret', async () => {
+  const response = await handleApi(new Request('https://example.test/api/llm', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: '你好' }] }),
+  }), apiEnv());
+
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error.message.includes('API Key'), true);
+});
+
+test('streams the upstream SSE response through the LLM endpoint', async () => {
+  let upstreamRequest;
+  const response = await handleApi(new Request('https://example.test/api/llm', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: '写一条文案' }], stream: true }),
+  }), { ...apiEnv(), DEEPSEEK_API_KEY: 'sk-worker-secret' }, {
+    fetch: async request => {
+      upstreamRequest = request;
+      return new Response('data: {"choices":[]}\n\ndata: [DONE]\n\n', {
+        status: 200, headers: { 'content-type': 'text/event-stream; charset=utf-8' },
+      });
+    },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'text/event-stream; charset=utf-8');
+  assert.equal(await response.text(), 'data: {"choices":[]}\n\ndata: [DONE]\n\n');
+  assert.equal(upstreamRequest.headers.get('authorization'), 'Bearer sk-worker-secret');
+});
